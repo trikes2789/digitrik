@@ -1,461 +1,345 @@
-'use client';
+"use client";
 
-import React, { useCallback, useState, useEffect } from 'react';
-import { useDropzone } from 'react-dropzone';
-import { PDFDocument, rgb, degrees, StandardFonts } from 'pdf-lib';
-import { DragDropContext, Droppable, Draggable } from '@hello-pangea/dnd';
+import React, { useState, useCallback } from 'react';
 import { 
-  FileText, Plus, Trash2, RefreshCcw, ChevronDown, Wand2, GripVertical, ImageIcon, Eye, AlignLeft, AlignCenter, AlignRight, ChevronUp
+  Upload, FileText, X, MoveVertical, 
+  Download, FilePlus, Shield, Zap, 
+  ChevronRight, AlertCircle, CheckCircle2,
+  Settings2, Info
 } from 'lucide-react';
+import { PDFDocument } from 'pdf-lib';
 
-export default function DigitrikWorkstation() {
+export default function Workstation() {
   const [files, setFiles] = useState([]);
-  const [action, setAction] = useState('conversione'); 
   const [isProcessing, setIsProcessing] = useState(false);
-  const [previewUrl, setPreviewUrl] = useState(null);
+  const [status, setStatus] = useState('idle'); // idle, processing, success, error
+  const [dragActive, setDragActive] = useState(false);
 
-  // --- STATI PER MENU A SCOMPARSA ---
-  const [isLayoutOpen, setIsLayoutOpen] = useState(false);
-  const [isMatrixOpen, setIsMatrixOpen] = useState(false);
-
-  // --- STATI LAYOUT ---
-  const [useHeader, setUseHeader] = useState(false);
-  const [headerText, setHeaderText] = useState('');
-  const [headerAlign, setHeaderAlign] = useState('left');
-
-  const [useFooter, setUseFooter] = useState(false);
-  const [footerText, setFooterText] = useState('');
-  const [footerAlign, setFooterAlign] = useState('left');
-
-  const [usePagination, setUsePagination] = useState(false);
-  const [paginationAlign, setPaginationAlign] = useState('right');
-
-  // Stati Filigrane Testuali
-  const [useWatermark, setUseWatermark] = useState(false);
-  const [useGridWatermark, setUseGridWatermark] = useState(false);
-  const [useSecurityWatermark, setUseSecurityWatermark] = useState(false);
-  const [watermarkText, setWatermarkText] = useState('');
-  const [textOpacity, setTextOpacity] = useState(0.25);
-  const [textSize, setTextSize] = useState(30);
-  
-  // Stato Logo Filigrana
-  const [useLogoWatermark, setUseLogoWatermark] = useState(false);
-  const [logoFile, setLogoFile] = useState(null);
-  const [logoOpacity, setLogoOpacity] = useState(0.15);
-  const [logoSize, setLogoSize] = useState(150);
-
-  // --- LOGICA DI CALCOLO POSIZIONE ---
-  const getXPos = (align, textWidth, pageWidth) => {
-    if (align === 'center') return (pageWidth / 2) - (textWidth / 2);
-    if (align === 'right') return pageWidth - textWidth - 40;
-    return 40; // left
-  };
-
-  // --- LIVE PREVIEW ---
-  const generatePreview = useCallback(async () => {
-    if (files.length === 0) {
-      setPreviewUrl(null);
-      return;
-    }
-
-    try {
-      const firstFile = files[0].file;
-      const arrayBuffer = await firstFile.arrayBuffer();
-      const previewPdf = await PDFDocument.create();
-      const fontBold = await previewPdf.embedFont(StandardFonts.HelveticaBold);
-      const fontNormal = await previewPdf.embedFont(StandardFonts.Helvetica);
-      
-      let page;
-      if (firstFile.type === 'application/pdf') {
-        const sourcePdf = await PDFDocument.load(arrayBuffer);
-        const [firstPage] = await previewPdf.copyPages(sourcePdf, [0]);
-        page = previewPdf.addPage(firstPage);
-      } else if (firstFile.type.startsWith('image/')) {
-        page = previewPdf.addPage();
-        const img = firstFile.type === 'image/png' ? await previewPdf.embedPng(arrayBuffer) : await previewPdf.embedJpg(arrayBuffer);
-        const dims = img.scaleToFit(page.getWidth() - 40, page.getHeight() - 40);
-        page.drawImage(img, { x: page.getWidth()/2 - dims.width/2, y: page.getHeight()/2 - dims.height/2, width: dims.width, height: dims.height });
-      } else { return; }
-
-      const { width, height } = page.getSize();
-
-      if (useHeader && headerText.trim() !== '') {
-        const text = headerText.toUpperCase();
-        const fSize = 9;
-        const tWidth = fontBold.widthOfTextAtSize(text, fSize);
-        page.drawText(text, { x: getXPos(headerAlign, tWidth, width), y: height - 40, size: fSize, font: fontBold, color: rgb(0.3, 0.3, 0.3) });
-      }
-
-      if (useFooter && footerText.trim() !== '') {
-        const fSize = 9;
-        const tWidth = fontNormal.widthOfTextAtSize(footerText, fSize);
-        page.drawText(footerText, { x: getXPos(footerAlign, tWidth, width), y: 30, size: fSize, font: fontNormal, color: rgb(0.3, 0.3, 0.3) });
-      }
-
-      if (usePagination) {
-        const text = `Pag. 1 / ${files.length}`;
-        const fSize = 9;
-        const tWidth = fontNormal.widthOfTextAtSize(text, fSize);
-        page.drawText(text, { x: getXPos(paginationAlign, tWidth, width), y: 30, size: fSize, font: fontNormal, color: rgb(0.4, 0.4, 0.4) });
-      }
-
-      if (watermarkText.trim() !== '') {
-        if (useWatermark) {
-          const textW = fontBold.widthOfTextAtSize(watermarkText, textSize);
-          for (let x = -width; x < width * 2; x += (textW / 2) + 7) {
-            for (let y = -height; y < height * 2; y += 150) page.drawText(watermarkText, { x, y, size: textSize, font: fontBold, color: rgb(0.3, 0.3, 0.3), opacity: textOpacity, rotate: degrees(45) });
-          }
-        }
-        if (useGridWatermark) {
-          for (let x = 30; x < width; x += 120) {
-            for (let y = 30; y < height; y += 80) page.drawText(watermarkText.substring(0, 10), { x, y, size: textSize * 0.6, font: fontBold, color: rgb(0.4, 0.4, 0.4), opacity: textOpacity });
-          }
-        }
-        if (useSecurityWatermark) {
-          const secText = watermarkText.substring(0, 30).padEnd(15, ' ');
-          const textW = fontBold.widthOfTextAtSize(secText, textSize * 1.6);
-          const angleRad = 60 * Math.PI / 180;
-          page.drawText(secText, { x: width/2 - (textW/2)*Math.cos(angleRad), y: height/2 - (textW/2)*Math.sin(angleRad), size: textSize * 1.6, font: fontBold, color: rgb(0.5, 0.1, 0.1), opacity: textOpacity, rotate: degrees(60) });
-        }
-      }
-
-      if (useLogoWatermark && logoFile) {
-        const logoBuf = await logoFile.arrayBuffer();
-        const logoImg = logoFile.type === 'image/png' ? await previewPdf.embedPng(logoBuf) : await previewPdf.embedJpg(logoBuf);
-        const dims = logoImg.scaleToFit(logoSize, logoSize);
-        for (let x = 30; x < width; x += logoSize * 1.3) {
-          for (let y = 30; y < height; y += logoSize * 1.2) page.drawImage(logoImg, { x, y, width: dims.width, height: dims.height, opacity: logoOpacity });
-        }
-      }
-
-      const pdfBytes = await previewPdf.save();
-      const blob = new Blob([pdfBytes], { type: 'application/pdf' });
-      if (previewUrl) URL.revokeObjectURL(previewUrl);
-      setPreviewUrl(URL.createObjectURL(blob));
-    } catch (e) { console.error("Preview error", e); }
-  }, [files, useWatermark, useGridWatermark, useSecurityWatermark, useLogoWatermark, logoFile, watermarkText, logoOpacity, textOpacity, textSize, logoSize, useHeader, headerText, headerAlign, useFooter, footerText, footerAlign, usePagination, paginationAlign]);
-
-  useEffect(() => {
-    const timer = setTimeout(generatePreview, 500);
-    return () => clearTimeout(timer);
-  }, [generatePreview]);
-
-  const onDrop = useCallback(acceptedFiles => {
-    const newFiles = acceptedFiles.map(file => ({
-      id: `${file.name}-${Date.now()}-${Math.random()}`,
-      file: file
+  // Gestione caricamento file
+  const handleFiles = (newFiles) => {
+    const validFiles = Array.from(newFiles).filter(file => 
+      file.type === 'application/pdf' || file.type.startsWith('image/')
+    ).map(file => ({
+      id: Math.random().toString(36).substr(2, 9),
+      file: file,
+      name: file.name,
+      size: (file.size / (1024 * 1024)).toFixed(2) + ' MB',
+      type: file.type,
+      preview: file.type.startsWith('image/') ? URL.createObjectURL(file) : null
     }));
-    setFiles(prev => [...prev, ...newFiles]);
-  }, []);
 
-  const { getRootProps, getInputProps, isDragActive } = useDropzone({ onDrop });
-
-  const onDropLogo = useCallback(acceptedFiles => {
-    if (acceptedFiles.length > 0) setLogoFile(acceptedFiles[0]);
-  }, []);
-
-  const { getRootProps: getLogoRootProps, getInputProps: getLogoInputProps, isDragActive: isLogoDragActive } = useDropzone({ 
-    onDrop: onDropLogo, accept: { 'image/*': ['.jpeg', '.jpg', '.png'] }, multiple: false 
-  });
-
-  const onDragEnd = (result) => {
-    if (!result.destination) return;
-    const items = Array.from(files);
-    const [reorderedItem] = items.splice(result.source.index, 1);
-    items.splice(result.destination.index, 0, reorderedItem);
-    setFiles(items);
+    setFiles(prev => [...prev, ...validFiles]);
+    setStatus('idle');
   };
 
-  const removeFile = (id) => setFiles(prev => prev.filter(f => f.id !== id));
+  const handleDrag = (e) => {
+    e.preventDefault();
+    e.stopPropagation();
+    if (e.type === "dragenter" || e.type === "dragover") {
+      setDragActive(true);
+    } else if (e.type === "dragleave") {
+      setDragActive(false);
+    }
+  };
 
+  const handleDrop = (e) => {
+    e.preventDefault();
+    e.stopPropagation();
+    setDragActive(false);
+    if (e.dataTransfer.files && e.dataTransfer.files[0]) {
+      handleFiles(e.dataTransfer.files);
+    }
+  };
+
+  const removeFile = (id) => {
+    setFiles(prev => {
+      const filtered = prev.filter(f => f.id !== id);
+      const removed = prev.find(f => f.id === id);
+      if (removed?.preview) URL.revokeObjectURL(removed.preview);
+      return filtered;
+    });
+  };
+
+  // LOGICA "TRICK" (PDF MERGE)
   const executeTrick = async () => {
-    if (files.length === 0) return alert("Coda vuota.");
-    const customName = prompt("Come vuoi battezzare il file finale?", "Digitrik_Result");
-    if (!customName) return; 
-
+    if (files.length === 0) return;
+    
     setIsProcessing(true);
+    setStatus('processing');
+
     try {
       const mergedPdf = await PDFDocument.create();
-      const fontBold = await mergedPdf.embedFont(StandardFonts.HelveticaBold);
-      const fontNormal = await mergedPdf.embedFont(StandardFonts.Helvetica);
       
-      if (action === 'conversione') {
-        for (const f of files) {
-          const arrayBuffer = await f.file.arrayBuffer();
-          if (f.file.type === 'application/pdf') {
-            const pdf = await PDFDocument.load(arrayBuffer);
-            const pages = await mergedPdf.copyPages(pdf, pdf.getPageIndices());
-            pages.forEach(p => mergedPdf.addPage(p));
-          } else if (f.file.type.startsWith('image/')) {
-            const page = mergedPdf.addPage();
-            const { width, height } = page.getSize();
-            let image = f.file.type === 'image/png' ? await mergedPdf.embedPng(arrayBuffer) : await mergedPdf.embedJpg(arrayBuffer);
-            const dims = image.scaleToFit(width - 40, height - 40);
-            page.drawImage(image, { x: width / 2 - dims.width / 2, y: height / 2 - dims.height / 2, width: dims.width, height: dims.height });
-          }
-        }
-      } else if (action === 'unisci') {
-        for (const f of files) {
-          const pdf = await PDFDocument.load(await f.file.arrayBuffer());
-          const pages = await mergedPdf.copyPages(pdf, pdf.getPageIndices());
-          pages.forEach(p => mergedPdf.addPage(p));
-        }
-      } else if (action === 'estrai') {
-        const range = prompt("Pagine da estrarre (es: 1, 3-5):", "1");
-        if (!range) { setIsProcessing(false); return; }
-        const targetPages = range.split(',').flatMap(part => {
-          if (part.includes('-')) {
-            const [start, end] = part.split('-').map(Number);
-            return Array.from({length: end - start + 1}, (_, i) => start + i - 1);
-          }
-          return [Number(part) - 1];
-        });
-        for (const f of files) {
-          const pdf = await PDFDocument.load(await f.file.arrayBuffer());
-          const pages = await mergedPdf.copyPages(pdf, targetPages.filter(idx => idx >= 0 && idx < pdf.getPageCount()));
-          pages.forEach(p => mergedPdf.addPage(p));
+      for (const fileObj of files) {
+        const fileBytes = await fileObj.file.arrayBuffer();
+        
+        if (fileObj.type === 'application/pdf') {
+          const pdf = await PDFDocument.load(fileBytes);
+          const copiedPages = await mergedPdf.copyPages(pdf, pdf.getPageIndices());
+          copiedPages.forEach((page) => mergedPdf.addPage(page));
+        } else if (fileObj.type.startsWith('image/')) {
+          const image = fileObj.type === 'image/png' 
+            ? await mergedPdf.embedPng(fileBytes)
+            : await mergedPdf.embedJpg(fileBytes);
+          
+          const page = mergedPdf.addPage([image.width, image.height]);
+          page.drawImage(image, {
+            x: 0,
+            y: 0,
+            width: image.width,
+            height: image.height,
+          });
         }
       }
 
-      let embeddedLogo = null;
-      if (useLogoWatermark && logoFile) {
-        const logoBuffer = await logoFile.arrayBuffer();
-        embeddedLogo = logoFile.type === 'image/png' ? await mergedPdf.embedPng(logoBuffer) : await mergedPdf.embedJpg(logoBuffer);
-      }
-
-      const pages = mergedPdf.getPages();
-      const totalPages = pages.length;
-
-      pages.forEach((page, index) => {
-        const { width, height } = page.getSize();
-        if (useHeader && headerText.trim() !== '') {
-          const text = headerText.toUpperCase();
-          const tWidth = fontBold.widthOfTextAtSize(text, 9);
-          page.drawText(text, { x: getXPos(headerAlign, tWidth, width), y: height - 40, size: 9, font: fontBold, color: rgb(0.3, 0.3, 0.3) });
-        }
-        if (useFooter && footerText.trim() !== '') {
-          const tWidth = fontNormal.widthOfTextAtSize(footerText, 9);
-          page.drawText(footerText, { x: getXPos(footerAlign, tWidth, width), y: 30, size: 9, font: fontNormal, color: rgb(0.3, 0.3, 0.3) });
-        }
-        if (usePagination) {
-          const text = `Pag. ${index + 1} / ${totalPages}`;
-          const tWidth = fontNormal.widthOfTextAtSize(text, 9);
-          page.drawText(text, { x: getXPos(paginationAlign, tWidth, width), y: 30, size: 9, font: fontNormal, color: rgb(0.4, 0.4, 0.4) });
-        }
-
-        if (watermarkText.trim() !== '') {
-          if (useWatermark) {
-            const textW = fontBold.widthOfTextAtSize(watermarkText, textSize);
-            for (let x = -width; x < width * 2; x += (textW / 2) + 7) {
-              for (let y = -height; y < height * 2; y += 150) page.drawText(watermarkText, { x, y, size: textSize, font: fontBold, color: rgb(0.3, 0.3, 0.3), opacity: textOpacity, rotate: degrees(45) });
-            }
-          }
-          if (useGridWatermark) {
-            for (let x = 30; x < width; x += 120) {
-              for (let y = 30; y < height; y += 80) page.drawText(watermarkText.substring(0, 10), { x, y, size: textSize * 0.6, font: fontBold, color: rgb(0.4, 0.4, 0.4), opacity: textOpacity });
-            }
-          }
-          if (useSecurityWatermark) {
-            const secText = watermarkText.substring(0, 30).padEnd(15, ' ');
-            const textW = fontBold.widthOfTextAtSize(secText, textSize * 1.6);
-            const angleRad = 60 * Math.PI / 180;
-            page.drawText(secText, { x: width/2 - (textW/2)*Math.cos(angleRad), y: height/2 - (textW/2)*Math.sin(angleRad), size: textSize * 1.6, font: fontBold, color: rgb(0.5, 0.1, 0.1), opacity: textOpacity, rotate: degrees(60) });
-          }
-        }
-        if (useLogoWatermark && embeddedLogo) {
-          const logoDims = embeddedLogo.scaleToFit(logoSize, logoSize); 
-          for (let x = 30; x < width; x += logoSize * 1.3) {
-            for (let y = 30; y < height; y += logoSize * 1.2) page.drawImage(embeddedLogo, { x, y, width: logoDims.width, height: logoDims.height, opacity: logoOpacity });
-          }
-        }
-      });
-
-      const finalPdfBytes = await mergedPdf.save();
-      const blob = new Blob([finalPdfBytes], { type: 'application/pdf' });
+      const pdfBytes = await mergedPdf.save();
+      const blob = new Blob([pdfBytes], { type: 'application/pdf' });
       const url = URL.createObjectURL(blob);
       const link = document.createElement('a');
-      link.href = url; link.download = `${customName}.pdf`; link.click();
-    } catch (e) { alert("Errore nel processo."); } finally { setIsProcessing(false); }
+      link.href = url;
+      link.download = `digitrik_result_${Date.now()}.pdf`;
+      link.click();
+      
+      setStatus('success');
+      setTimeout(() => setStatus('idle'), 5000);
+    } catch (err) {
+      console.error(err);
+      setStatus('error');
+    } finally {
+      setIsProcessing(false);
+    }
   };
 
-  const AlignmentPicker = ({ current, set }) => (
-    <div className="flex gap-1 bg-black p-1 rounded-lg">
-      {[ {id:'left', icon:<AlignLeft size={14}/>}, {id:'center', icon:<AlignCenter size={14}/>}, {id:'right', icon:<AlignRight size={14}/>} ].map(b => (
-        <button key={b.id} onClick={() => set(b.id)} className={`p-1.5 rounded transition-all ${current === b.id ? 'bg-blue-600 text-white' : 'text-gray-500 hover:text-white'}`}>
-          {b.icon}
-        </button>
-      ))}
-    </div>
-  );
-
   return (
-    <main className="min-h-screen bg-[#080808] text-[#e0e0e0] font-sans">
-      <nav className="h-14 border-b border-white/5 flex items-center px-8 bg-[#0a0a0a] sticky top-0 z-50">
-        <h1 className="text-xl font-black italic tracking-tighter text-white uppercase">Digitrik <span className="text-blue-600 font-normal">Core</span></h1>
-      </nav>
+    <div className="min-h-screen bg-[#080808] text-gray-100 p-4 md:p-8 font-sans selection:bg-blue-500/30">
+      
+      {/* BACKGROUND DECORATION */}
+      <div className="fixed top-0 left-1/2 -translate-x-1/2 w-full h-[500px] bg-blue-600/5 blur-[120px] pointer-events-none -z-10" />
 
-      <div className="grid grid-cols-12">
-        <div className="col-span-8 p-8 space-y-6 border-r border-white/5">
-          {previewUrl && (
-            <div className="space-y-2 sticky top-20 z-40">
-              <div className="flex items-center gap-2 text-blue-500 font-black italic text-[10px] uppercase"><Eye size={14} /> Live Matrix Preview</div>
-              <div className="w-full h-80 bg-[#111] rounded-[2rem] border border-blue-600/20 overflow-hidden shadow-2xl relative">
-                <iframe src={`${previewUrl}#toolbar=0&navpanes=0`} className="w-full h-full border-none opacity-80" />
-              </div>
-            </div>
-          )}
-          <div {...getRootProps()} className={`border-2 border-dashed rounded-[2rem] p-12 text-center cursor-pointer transition-all ${isDragActive ? 'border-blue-600 bg-blue-600/5' : 'border-white/10 hover:bg-white/[0.02]'}`}>
-            <input {...getInputProps()} />
-            <Plus className="mx-auto mb-4 text-gray-700" size={32} />
-            <p className="font-bold italic text-gray-500 text-sm">Trascina qui i tuoi file</p>
+      {/* HEADER ELETTRONICO */}
+      <div className="max-w-6xl mx-auto mb-12 flex flex-col md:flex-row justify-between items-start md:items-center gap-6">
+        <div className="relative">
+          <div className="absolute -left-4 top-0 w-1 h-full bg-blue-600 rounded-full shadow-[0_0_15px_rgba(37,99,235,0.5)]" />
+          <h1 className="text-4xl font-black tracking-tighter text-white italic leading-none">
+            DIGITRIK <span className="text-blue-600 not-italic">WS</span>
+          </h1>
+          <div className="flex items-center gap-2 mt-2">
+            <span className="h-[1px] w-8 bg-gray-800" />
+            <p className="text-gray-500 text-[10px] uppercase tracking-[0.3em] font-bold">Terminal v4.0.1_Stable</p>
           </div>
-          <DragDropContext onDragEnd={onDragEnd}>
-            <Droppable droppableId="files-list">
-              {(provided) => (
-                <div {...provided.droppableProps} ref={provided.innerRef} className="space-y-3">
-                  {files.map((f, i) => (
-                    <Draggable key={f.id} draggableId={f.id} index={i}>
-                      {(provided, snapshot) => (
-                        <div ref={provided.innerRef} {...provided.draggableProps} className={`flex justify-between items-center bg-[#111] p-4 rounded-2xl border transition-all ${snapshot.isDragging ? 'border-blue-600 bg-blue-600/10 shadow-2xl z-50' : 'border-white/5'}`}>
-                          <div className="flex items-center gap-4">
-                            <div {...provided.dragHandleProps} className="text-gray-700 cursor-grab"><GripVertical size={20} /></div>
-                            <span className="text-blue-600 font-black italic text-sm">{i+1}</span>
-                            <FileText size={20} className="text-gray-600" />
-                            <p className="text-xs font-bold truncate max-w-[250px] text-white">{f.file.name}</p>
-                          </div>
-                          <button onClick={() => removeFile(f.id)} className="text-gray-700 hover:text-red-500 p-2"><Trash2 size={18}/></button>
-                        </div>
-                      )}
-                    </Draggable>
-                  ))}
-                  {provided.placeholder}
-                </div>
-              )}
-            </Droppable>
-          </DragDropContext>
         </div>
 
-        <div className="col-span-4 bg-[#0a0a0a] p-8 space-y-6 relative overflow-y-auto max-h-screen">
-          <button onClick={executeTrick} disabled={isProcessing} className="w-full bg-blue-600 hover:bg-blue-700 disabled:bg-gray-800 text-white py-8 rounded-[2rem] font-black italic uppercase tracking-widest text-xl transition-all flex flex-col items-center justify-center gap-2 shadow-2xl">
-            {isProcessing ? <RefreshCcw className="animate-spin" size={24} /> : <><Wand2 size={24} /><span>ESEGUI TRICK</span></>}
-          </button>
-
-          <div className="relative">
-            <select value={action} onChange={(e) => setAction(e.target.value)} className="w-full bg-[#111] border border-white/10 rounded-[1.5rem] p-5 appearance-none font-bold italic text-white text-sm focus:border-blue-600 outline-none">
-              <option value="conversione">Protocollo: Conversione</option>
-              <option value="unisci">Protocollo: Unione</option>
-              <option value="estrai">Protocollo: Estrazione</option>
-            </select>
-            <ChevronDown className="absolute right-5 top-1/2 -translate-y-1/2 text-gray-500 pointer-events-none" size={18} />
+        <div className="flex gap-4 w-full md:w-auto">
+          <div className="flex-1 md:flex-none bg-[#0c0c0c] border border-gray-800 rounded-xl px-4 py-2 flex items-center gap-3">
+            <div className={`w-2 h-2 rounded-full animate-pulse ${status === 'error' ? 'bg-red-500' : 'bg-blue-500'}`} />
+            <div>
+              <div className="text-[10px] text-gray-500 font-bold uppercase tracking-tight">System Status</div>
+              <div className="text-xs font-mono text-gray-300">{status.toUpperCase()}</div>
+            </div>
           </div>
-
-          {/* LAYOUT TOOLS A SCOMPARSA */}
-          <div className="bg-[#111] rounded-2xl border border-white/5 overflow-hidden">
-            <button 
-              onClick={() => setIsLayoutOpen(!isLayoutOpen)}
-              className="w-full p-5 flex items-center justify-between text-[10px] font-black uppercase text-gray-400 hover:text-white transition-colors italic"
-            >
-              <span>Layout & Info</span>
-              {isLayoutOpen ? <ChevronUp size={16} /> : <ChevronDown size={16} />}
-            </button>
-            
-            {isLayoutOpen && (
-              <div className="p-5 pt-0 space-y-5 border-t border-white/5 mt-2 animate-in fade-in slide-in-from-top-1">
-                <div className="space-y-3">
-                  <div className="flex justify-between items-center">
-                    <label className="flex items-center gap-2 cursor-pointer">
-                      <input type="checkbox" checked={useHeader} onChange={e => setUseHeader(e.target.checked)} className="w-3.5 h-3.5 rounded bg-black border-white/10" />
-                      <span className="text-[10px] font-bold text-gray-400 uppercase">Intestazione</span>
-                    </label>
-                    <AlignmentPicker current={headerAlign} set={setHeaderAlign} />
-                  </div>
-                  <input type="text" placeholder="Testo intestazione..." value={headerText} onChange={e => setHeaderText(e.target.value)} className="w-full bg-black border border-white/5 rounded-xl p-3 text-xs text-white outline-none focus:border-blue-600/50" />
-                </div>
-
-                <div className="space-y-3">
-                  <div className="flex justify-between items-center">
-                    <label className="flex items-center gap-2 cursor-pointer">
-                      <input type="checkbox" checked={useFooter} onChange={e => setUseFooter(e.target.checked)} className="w-3.5 h-3.5 rounded bg-black border-white/10" />
-                      <span className="text-[10px] font-bold text-gray-400 uppercase">Piè di Pagina</span>
-                    </label>
-                    <AlignmentPicker current={footerAlign} set={setFooterAlign} />
-                  </div>
-                  <input type="text" placeholder="Testo piè di pagina..." value={footerText} onChange={e => setFooterText(e.target.value)} className="w-full bg-black border border-white/5 rounded-xl p-3 text-xs text-white outline-none focus:border-blue-600/50" />
-                </div>
-
-                <div className="flex justify-between items-center pt-2">
-                  <label className="flex items-center gap-2 cursor-pointer">
-                    <input type="checkbox" checked={usePagination} onChange={e => setUsePagination(e.target.checked)} className="w-3.5 h-3.5 rounded bg-black border-white/10" />
-                    <span className="text-[10px] font-bold text-gray-400 uppercase">Numerazione Pagine</span>
-                  </label>
-                  <AlignmentPicker current={paginationAlign} set={setPaginationAlign} />
-                </div>
-              </div>
-            )}
-          </div>
-
-          {/* PROTEZIONE MATRIX A SCOMPARSA */}
-          <div className="bg-[#111] rounded-2xl border border-white/5 overflow-hidden">
-            <button 
-              onClick={() => setIsMatrixOpen(!isMatrixOpen)}
-              className="w-full p-5 flex items-center justify-between text-[10px] font-black uppercase text-gray-400 hover:text-white transition-colors italic"
-            >
-              <span>Protezione Matrix</span>
-              {isMatrixOpen ? <ChevronUp size={16} /> : <ChevronDown size={16} />}
-            </button>
-
-            {isMatrixOpen && (
-              <div className="p-5 pt-0 space-y-6 border-t border-white/5 mt-2 animate-in fade-in slide-in-from-top-1">
-                <input type="text" placeholder="Testo filigrana..." value={watermarkText} onChange={(e) => setWatermarkText(e.target.value)} className="w-full bg-black border border-white/5 rounded-xl p-4 text-xs font-bold italic text-white outline-none focus:border-blue-600/50" />
-
-                <div className="grid grid-cols-1 gap-3">
-                  {[ {s:useWatermark, f:setUseWatermark, t:'Nastro'}, {s:useGridWatermark, f:setUseGridWatermark, t:'Griglia'}, {s:useSecurityWatermark, f:setUseSecurityWatermark, t:'Security'} ].map(item => (
-                    <label key={item.t} className="flex items-center gap-3 cursor-pointer">
-                      <input type="checkbox" checked={item.s} onChange={(e) => item.f(e.target.checked)} className="w-4 h-4 text-blue-600 bg-black border-white/10 rounded" />
-                      <span className="text-[10px] font-black uppercase text-gray-400 italic">{item.t}</span>
-                    </label>
-                  ))}
-                </div>
-
-                <div className="space-y-4 pt-2 border-t border-white/5">
-                  <div className="flex flex-col gap-2">
-                    <div className="flex justify-between text-[9px] font-black uppercase"><span className="text-gray-500">Dimensione Testo</span><span className="text-blue-500">{textSize}px</span></div>
-                    <input type="range" min="10" max="150" value={textSize} onChange={(e) => setTextSize(parseInt(e.target.value))} className="w-full h-1 bg-black rounded-lg appearance-none cursor-pointer accent-blue-600" />
-                  </div>
-                  <div className="flex flex-col gap-2">
-                    <div className="flex justify-between text-[9px] font-black uppercase"><span className="text-gray-500">Opacità Testo</span><span className="text-blue-500">{Math.round(textOpacity * 100)}%</span></div>
-                    <input type="range" min="0.05" max="1" step="0.05" value={textOpacity} onChange={(e) => setTextOpacity(parseFloat(e.target.value))} className="w-full h-1 bg-black rounded-lg appearance-none cursor-pointer accent-blue-600" />
-                  </div>
-                </div>
-
-                <div className="pt-4 space-y-4 border-t border-white/5">
-                  <label className="flex items-center gap-3 cursor-pointer">
-                    <input type="checkbox" checked={useLogoWatermark} onChange={(e) => setUseLogoWatermark(e.target.checked)} className="w-4 h-4 text-blue-600 bg-black border-white/10 rounded" />
-                    <span className="text-[10px] font-black uppercase text-blue-500 italic">Logo come Griglia</span>
-                  </label>
-
-                  <div {...getLogoRootProps()} className={`border border-dashed rounded-xl p-4 text-center cursor-pointer transition-all ${isLogoDragActive ? 'border-blue-600 bg-blue-600/5' : 'border-white/10 hover:bg-white/[0.02]'}`}>
-                    <input {...getLogoInputProps()} />
-                    <ImageIcon className={`mx-auto mb-2 ${logoFile ? 'text-blue-500' : 'text-gray-700'}`} size={20} />
-                    <p className="text-[9px] font-bold text-gray-500 uppercase">{logoFile ? logoFile.name : "Carica Logo"}</p>
-                  </div>
-
-                  <div className="space-y-4">
-                    <div className="flex flex-col gap-2">
-                      <div className="flex justify-between text-[9px] font-black uppercase"><span className="text-gray-500">Dimensione Logo</span><span className="text-blue-500">{logoSize}px</span></div>
-                      <input type="range" min="20" max="400" step="5" value={logoSize} onChange={(e) => setLogoSize(parseInt(e.target.value))} className="w-full h-1 bg-black rounded-lg appearance-none cursor-pointer accent-blue-600" />
-                    </div>
-                    <div className="flex flex-col gap-2">
-                      <div className="flex justify-between text-[9px] font-black uppercase"><span className="text-gray-500">Opacità Logo</span><span className="text-blue-500">{Math.round(logoOpacity * 100)}%</span></div>
-                      <input type="range" min="0.05" max="1" step="0.05" value={logoOpacity} onChange={(e) => setLogoOpacity(parseFloat(e.target.value))} className="w-full h-1 bg-black rounded-lg appearance-none cursor-pointer accent-blue-600" />
-                    </div>
-                  </div>
-                </div>
-              </div>
-            )}
+          <div className="hidden lg:flex bg-[#0c0c0c] border border-gray-800 rounded-xl px-4 py-2 items-center gap-3">
+            <Shield className="text-gray-600" size={16} />
+            <div>
+              <div className="text-[10px] text-gray-500 font-bold uppercase tracking-tight">Security</div>
+              <div className="text-xs font-mono text-gray-300">SSL-LOCAL</div>
+            </div>
           </div>
         </div>
       </div>
-    </main>
+
+      <main className="max-w-6xl mx-auto grid grid-cols-1 lg:grid-cols-12 gap-8">
+        
+        {/* COLONNA SINISTRA: INPUT & LISTA */}
+        <div className="lg:col-span-7 space-y-6">
+          
+          {/* DROPZONE */}
+          <div 
+            onDragEnter={handleDrag}
+            onDragLeave={handleDrag}
+            onDragOver={handleDrag}
+            onDrop={handleDrop}
+            className={`relative group transition-all duration-500 rounded-3xl border-2 border-dashed 
+              ${dragActive ? 'border-blue-500 bg-blue-500/5 scale-[0.99]' : 'border-gray-800 bg-[#0c0c0c] hover:border-gray-700'}`}
+          >
+            <input
+              type="file"
+              multiple
+              accept="application/pdf,image/*"
+              onChange={(e) => handleFiles(e.target.files)}
+              className="absolute inset-0 w-full h-full opacity-0 cursor-pointer z-10"
+            />
+            <div className="p-12 text-center">
+              <div className={`w-20 h-20 rounded-2xl flex items-center justify-center mx-auto mb-6 transition-all duration-500
+                ${dragActive ? 'bg-blue-600 text-white rotate-180' : 'bg-gray-900 text-blue-500 group-hover:scale-110 group-hover:bg-blue-600/10'}`}>
+                <Upload size={32} />
+              </div>
+              <h3 className="text-2xl font-bold text-white mb-2">Ingresso Documenti</h3>
+              <p className="text-gray-500 text-sm max-w-xs mx-auto">
+                Trascina qui PDF o immagini. Il sistema li elaborerà in sequenza.
+              </p>
+              
+              <div className="mt-8 flex justify-center gap-6">
+                <div className="flex items-center gap-2 text-[10px] font-bold text-gray-600 uppercase">
+                  <CheckCircle2 size={12} className="text-blue-900" /> PDF Support
+                </div>
+                <div className="flex items-center gap-2 text-[10px] font-bold text-gray-600 uppercase">
+                  <CheckCircle2 size={12} className="text-blue-900" /> Image Embed
+                </div>
+              </div>
+            </div>
+          </div>
+
+          {/* LISTA FILE DINAMICA */}
+          <div className="space-y-3">
+            {files.length > 0 && (
+              <div className="flex items-center justify-between px-2">
+                <span className="text-[10px] font-black text-gray-600 uppercase tracking-widest">
+                  Coda di elaborazione ({files.length})
+                </span>
+                <button onClick={() => setFiles([])} className="text-[10px] text-red-500 font-bold hover:underline">
+                  CLEAR ALL
+                </button>
+              </div>
+            )}
+            
+            {files.map((file, index) => (
+              <div 
+                key={file.id} 
+                className="bg-[#111111] border border-gray-800/50 rounded-2xl p-4 flex items-center gap-4 group hover:border-blue-500/30 transition-all hover:translate-x-1"
+              >
+                <div className="text-[10px] font-mono text-gray-700 w-4">{index + 1}</div>
+                <div className="p-3 bg-gray-900 rounded-xl text-blue-500 group-hover:bg-blue-600 group-hover:text-white transition-colors">
+                  <FileText size={20} />
+                </div>
+                <div className="flex-1 min-w-0">
+                  <div className="text-sm font-bold text-gray-200 truncate">{file.name}</div>
+                  <div className="flex items-center gap-3 mt-1">
+                    <span className="text-[10px] text-gray-600 font-mono uppercase">{file.size}</span>
+                    <span className="h-1 w-1 bg-gray-800 rounded-full" />
+                    <span className="text-[10px] text-blue-500/70 font-bold uppercase">{file.type.split('/')[1]}</span>
+                  </div>
+                </div>
+                <button 
+                  onClick={() => removeFile(file.id)}
+                  className="p-2.5 bg-gray-900/50 hover:bg-red-500/10 hover:text-red-500 text-gray-700 transition-all rounded-xl border border-gray-800 group-hover:border-red-500/20"
+                >
+                  <X size={16} />
+                </button>
+              </div>
+            ))}
+
+            {files.length === 0 && (
+              <div className="py-20 text-center border border-gray-900 rounded-3xl border-dashed">
+                <Info size={24} className="mx-auto text-gray-800 mb-3" />
+                <p className="text-gray-700 text-xs font-bold uppercase tracking-widest">Nessun file in attesa</p>
+              </div>
+            )}
+          </div>
+        </div>
+
+        {/* COLONNA DESTRA: CONTROLLI E PUBBLICITÀ */}
+        <div className="lg:col-span-5">
+          <div className="bg-[#0c0c0c] border border-gray-800 rounded-[2rem] p-8 sticky top-8 shadow-2xl shadow-blue-900/5">
+            <div className="flex items-center justify-between mb-8">
+              <h2 className="text-xl font-black flex items-center gap-3">
+                <Settings2 size={24} className="text-blue-600" />
+                CONSOLE
+              </h2>
+              <div className="px-2 py-1 bg-blue-600/10 border border-blue-500/20 rounded-md text-[9px] font-bold text-blue-500 tracking-tighter uppercase">
+                Ready
+              </div>
+            </div>
+            
+            <div className="space-y-4 mb-8">
+              <div className="p-4 bg-gray-900/30 rounded-2xl border border-gray-800/50 hover:border-gray-700 transition-colors">
+                <div className="text-[10px] text-gray-600 font-black uppercase mb-1 tracking-widest">Algoritmo</div>
+                <div className="flex items-center justify-between">
+                  <span className="text-sm font-bold text-gray-300">PDF Smart Merge</span>
+                  <Zap size={14} className="text-yellow-500" />
+                </div>
+              </div>
+              <div className="p-4 bg-gray-900/30 rounded-2xl border border-gray-800/50 hover:border-gray-700 transition-colors">
+                <div className="text-[10px] text-gray-600 font-black uppercase mb-1 tracking-widest">Compressione</div>
+                <div className="flex items-center justify-between">
+                  <span className="text-sm font-bold text-gray-300">Lossless Engine</span>
+                  <div className="text-[10px] font-mono text-green-500 underline">ACTIVE</div>
+                </div>
+              </div>
+            </div>
+
+            {/* BANNER PUBBLICITARIO INTEGRATO - STESSA LARGHEZZA PULSANTE */}
+            <div className="w-full mb-6 group">
+              <div className="bg-[#121212] border border-blue-500/20 rounded-2xl p-4 flex items-center justify-between group-hover:border-blue-500/40 transition-all cursor-pointer relative overflow-hidden">
+                <div className="absolute top-0 right-0 w-24 h-24 bg-blue-600/5 blur-2xl -mr-10 -mt-10 group-hover:bg-blue-600/10 transition-colors" />
+                
+                <div className="flex items-center gap-4 relative z-10">
+                  <div className="w-12 h-12 bg-blue-600/20 rounded-xl flex items-center justify-center border border-blue-500/30 shadow-inner">
+                    <span className="text-blue-400 text-xs font-black italic tracking-tighter">DT</span>
+                  </div>
+                  <div>
+                    <h4 className="text-sm font-black text-white group-hover:text-blue-400 transition-colors tracking-tight">
+                      Digitrik <span className="text-blue-600 text-[10px] font-bold ml-1">PRO</span>
+                    </h4>
+                    <p className="text-[10px] text-gray-500 font-bold uppercase tracking-tight mt-0.5">
+                      Processi illimitati e cloud storage
+                    </p>
+                  </div>
+                </div>
+                <ChevronRight size={18} className="text-gray-700 group-hover:text-blue-500 group-hover:translate-x-1 transition-all" />
+              </div>
+            </div>
+
+            <button 
+              onClick={executeTrick}
+              disabled={files.length === 0 || isProcessing}
+              className={`w-full py-5 rounded-2xl font-black uppercase tracking-[0.2em] text-sm transition-all relative overflow-hidden group
+                ${files.length > 0 && !isProcessing
+                ? 'bg-blue-600 hover:bg-blue-500 text-white shadow-[0_10px_30px_rgba(37,99,235,0.3)] scale-100 hover:scale-[1.02]' 
+                : 'bg-gray-900 text-gray-700 cursor-not-allowed opacity-50'
+              }`}
+            >
+              <div className="relative z-10 flex items-center justify-center gap-3">
+                {isProcessing ? (
+                  <>
+                    <div className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin" />
+                    <span>Processing...</span>
+                  </>
+                ) : (
+                  <>
+                    <Zap size={18} fill="currentColor" />
+                    <span>Esegui Trick</span>
+                  </>
+                )}
+              </div>
+              {/* Effetto luce al passaggio */}
+              <div className="absolute inset-0 bg-gradient-to-r from-transparent via-white/10 to-transparent -translate-x-full group-hover:animate-[shimmer_1.5s_infinite] pointer-events-none" />
+            </button>
+            
+            <div className="mt-6 flex flex-col gap-3">
+              <div className="flex items-center gap-2 text-[9px] text-gray-600 font-bold uppercase tracking-widest justify-center">
+                <AlertCircle size={12} /> Privacy: I file non lasciano il browser
+              </div>
+              <div className="h-[1px] w-full bg-gray-900" />
+              <p className="text-[10px] text-center text-gray-700 px-4 leading-relaxed font-medium">
+                Sviluppato per professionisti del digitale. Crittografia end-to-end garantita dalla logica client-side.
+              </p>
+            </div>
+          </div>
+        </div>
+      </main>
+
+      {/* FOOTER */}
+      <footer className="max-w-6xl mx-auto mt-20 pb-8 text-center">
+        <div className="text-[10px] font-black text-gray-800 uppercase tracking-[0.5em]">
+          &copy; 2025 DIGITRIK WS // ALL RIGHTS RESERVED
+        </div>
+      </footer>
+
+      <style jsx global>{`
+        @keyframes shimmer {
+          100% { transform: translateX(100%); }
+        }
+      `}</style>
+    </div>
   );
 }
