@@ -7,7 +7,7 @@ import { DragDropContext, Droppable, Draggable } from '@hello-pangea/dnd';
 import { 
   FileText, Plus, Trash2, RefreshCcw, ChevronDown, Wand2, GripVertical, 
   ImageIcon, Eye, AlignLeft, AlignCenter, AlignRight, ChevronUp, Sparkles, X, Check, RotateCw, Tag, 
-  Activity, Shieldalert, Feather, Layers, Printer, Ghost
+  Activity, ShieldAlert, Feather, Layers, Printer, Ghost
 } from 'lucide-react';
 
 // --- DATABASE: FILE ENCYCLOPEDIA ---
