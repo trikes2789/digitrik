@@ -1,8 +1,8 @@
 'use client';
 
-import React, { useCallback, useState, useEffect } from 'react';
+import React, { useCallback, useState, useEffect, useRef } from 'react';
 import { useDropzone } from 'react-dropzone';
-// NOTA: Abbiamo rimosso l'import statico di pdf-lib per usare quello dinamico
+import { PDFDocument, rgb, degrees, StandardFonts } from 'pdf-lib';
 import { DragDropContext, Droppable, Draggable } from '@hello-pangea/dnd';
 import { 
   FileText, Plus, Trash2, RefreshCcw, Wand2, GripVertical, 
@@ -96,11 +96,18 @@ const Toast = ({ message, type, onClose }) => (
 
 // --- MAIN APP ---
 export default function DigitrikPro() {
+  // CORE STATE
   const [files, setFiles] = useState([]);
   const [activeTab, setActiveTab] = useState('files'); 
   const [previewUrl, setPreviewUrl] = useState(null);
   const [isProcessing, setIsProcessing] = useState(false);
   const [toast, setToast] = useState(null);
+
+  // UI STATE
+  const [showRenameModal, setShowRenameModal] = useState(false);
+  const [tempFilename, setTempFilename] = useState("Digitrik_Result");
+  const [trickCuriosity, setTrickCuriosity] = useState({ key: 'PDF', text: 'Il formato PDF è nato nel 1993.' });
+  const [isPreviewOpen, setIsPreviewOpen] = useState(true);
 
   // CONFIGURATION STATE
   const [config, setConfig] = useState({
@@ -158,22 +165,13 @@ export default function DigitrikPro() {
   }, []);
   const { getRootProps: getLogoProps, getInputProps: getLogoInput } = useDropzone({ onDrop: onLogoDrop, accept: {'image/*': []}, multiple: false });
 
-  // --- LOGIC: PDF ENGINE (DYNAMIC IMPORT FIX) ---
+  // --- LOGIC: PDF ENGINE ---
   const generatePdf = async (isPreview = false) => {
     if (files.length === 0) return null;
-    
-    if (!isPreview && config.encryptPdf && !config.userPassword) {
-      showToast("Password mancante per la crittografia!", "error");
-      throw new Error("Password missing");
-    }
-
     try {
-      // IMPORT DINAMICO: Carica la libreria intera solo quando serve per evitare che Turbopack rompa la crittografia
-      const { PDFDocument, StandardFonts, rgb, degrees } = await import('pdf-lib');
-
       const doc = await PDFDocument.create();
       
-      // Metadata
+      // Metadata (Solo se non è anteprima)
       if (!isPreview) {
         if (config.ghostMode) {
           doc.setTitle(""); doc.setAuthor(""); doc.setCreator("Ghost"); doc.setProducer("");
@@ -225,15 +223,16 @@ export default function DigitrikPro() {
         } else if (f.file.type.includes('text')) {
           const txt = await f.file.text();
           const page = doc.addPage();
-          // Semplice text rendering per testo puro
           const fontSize = 10;
           const lineHeight = 12;
           const lines = txt.split(/\r\n|\r|\n/);
           let y = 800;
           let x = 50;
           
-          // Disegna solo le prime righe che ci stanno per evitare loop infiniti in preview
-          for (let i = 0; i < Math.min(lines.length, 60); i++) {
+          const maxLines = isPreview ? 60 : lines.length;
+          
+          for (let i = 0; i < maxLines; i++) {
+             if (y < 50 && !isPreview) { page = doc.addPage(); y = 800; }
              page.drawText(lines[i].replace(/[^\x00-\x7F]/g, "?"), { x, y, size: fontSize, font: fontMono, color: rgb(0,0,0) });
              y -= lineHeight;
           }
@@ -284,7 +283,7 @@ export default function DigitrikPro() {
         }
       });
 
-      // ENCRYPTION - Ora chiamiamo direttamente .encrypt() perché l'import dinamico garantisce che la funzione esista
+      // ENCRYPTION (Solo se non è anteprima e se c'è password)
       if (!isPreview && config.encryptPdf && config.userPassword) {
         doc.encrypt({
           userPassword: config.userPassword,
@@ -304,7 +303,8 @@ export default function DigitrikPro() {
       return await doc.save();
     } catch (e) {
       console.error(e);
-      if(!isPreview && e.message !== "Password missing") showToast("Errore: " + e.message, "error");
+      // Non mostrare errori in console per il preview, solo per il download vero
+      if(!isPreview) showToast("Errore: " + e.message, "error");
       return null;
     }
   };
@@ -324,24 +324,47 @@ export default function DigitrikPro() {
     return () => clearTimeout(t);
   }, [files, config]);
 
-  const handleDownload = async () => {
+  // --- LOGICA DI ESPORTAZIONE (MODALE + DOWNLOAD) ---
+  
+  // 1. Click su "Esporta" -> Apre Modale (o avvisa se manca password)
+  const handleExportClick = () => {
+    if (files.length === 0) {
+      showToast("Nessun file da esportare!", "error");
+      return;
+    }
+    
+    // Check sicurezza
     if (config.encryptPdf && !config.userPassword) {
       showToast("Inserisci una password per criptare il file!", "error");
       setActiveTab('security');
       return;
     }
-    
+
+    // Set curiosity e apri modale
+    const keys = Object.keys(fileEncyclopedia);
+    const randomKey = keys[Math.floor(Math.random() * keys.length)];
+    setTrickCuriosity({ key: randomKey, text: fileEncyclopedia[randomKey].curiosity });
+    setTempFilename("Digitrik_Result");
+    setShowRenameModal(true);
+  };
+
+  // 2. Click su "Conferma" nel Modale -> Genera e Scarica
+  const handleConfirmDownload = async () => {
+    setShowRenameModal(false);
     setIsProcessing(true);
+    
     const pdfBytes = await generatePdf(false);
+    
     if (pdfBytes) {
       const blob = new Blob([pdfBytes], { type: 'application/pdf' });
       const url = URL.createObjectURL(blob);
       const link = document.createElement('a');
       link.href = url;
-      link.download = `digitrik_pro_${Date.now()}.pdf`;
+      link.download = `${tempFilename}.pdf`;
       link.click();
       showToast("Download completato con successo!");
     }
+    
     setIsProcessing(false);
   };
 
@@ -359,6 +382,37 @@ export default function DigitrikPro() {
   return (
     <div className="h-screen bg-zinc-950 text-zinc-100 font-sans flex overflow-hidden selection:bg-blue-500/30">
       
+      {/* MODAL RINOMINA */}
+      {showRenameModal && (
+        <div className="fixed inset-0 z-[100] flex items-center justify-center bg-black/80 backdrop-blur-sm transition-opacity duration-300">
+          <div className="bg-[#0a0a0a] border border-blue-600/30 rounded-[2rem] w-[90%] max-w-lg p-8 shadow-[0_0_50px_rgba(37,99,235,0.1)] relative">
+            <div className="flex items-center gap-3 mb-6">
+              <div className="bg-blue-600/10 p-3 rounded-full text-blue-500"><Wand2 size={24} /></div>
+              <div><h3 className="text-xl font-black italic text-white uppercase tracking-wider">Finalizza Trick</h3><p className="text-[11px] text-gray-500 font-bold uppercase">Scegli il nome del tuo file</p></div>
+              <button onClick={() => setShowRenameModal(false)} className="absolute top-6 right-6 text-gray-600 hover:text-white transition-colors"><X size={20} /></button>
+            </div>
+            <div className="space-y-2 mb-8">
+              <label className="text-xs font-bold text-gray-400 uppercase ml-2">Nome File</label>
+              <div className="relative">
+                <input type="text" value={tempFilename} onChange={(e) => setTempFilename(e.target.value)} onKeyDown={(e) => e.key === 'Enter' && handleConfirmDownload()} autoFocus className="w-full bg-[#111] border border-white/10 rounded-xl p-4 text-white font-medium outline-none focus:border-blue-600 transition-all shadow-inner" />
+                <span className="absolute right-4 top-1/2 -translate-y-1/2 text-gray-600 text-xs font-bold pointer-events-none">.PDF</span>
+              </div>
+            </div>
+            <div className="bg-blue-900/10 border border-blue-600/10 rounded-2xl p-5 mb-8 flex gap-4">
+              <Sparkles className="text-blue-500 shrink-0 mt-0.5" size={18} />
+              <div className="space-y-1">
+                <span className="text-[10px] font-black text-blue-400 uppercase tracking-widest block">Lo sapevi? ({trickCuriosity.key})</span>
+                <p className="text-xs text-gray-300 italic leading-relaxed">{trickCuriosity.text}</p>
+              </div>
+            </div>
+            <div className="flex gap-3">
+              <button onClick={() => setShowRenameModal(false)} className="flex-1 py-4 rounded-xl border border-white/5 hover:bg-white/5 text-gray-400 font-bold text-xs uppercase tracking-widest transition-all">Annulla</button>
+              <button onClick={handleConfirmDownload} className="flex-1 py-4 bg-blue-600 hover:bg-blue-500 text-white rounded-xl font-black text-xs uppercase tracking-widest shadow-lg shadow-blue-900/20 transition-all flex items-center justify-center gap-2"><Check size={16} /> Conferma & Scarica</button>
+            </div>
+          </div>
+        </div>
+      )}
+
       {/* 1. LEFT SIDEBAR */}
       <aside className="w-64 border-r border-white/5 bg-zinc-950 flex flex-col p-4 z-20">
         <div className="mb-8 px-2 flex items-center gap-2">
@@ -466,15 +520,27 @@ export default function DigitrikPro() {
             )}
           </div>
 
+          {/* PREVIEW SECTION (Collapsible) */}
           {previewUrl && (
             <div className="mt-8 animate-in fade-in slide-in-from-bottom-4 duration-500">
-              <div className="flex justify-between items-center mb-4 px-2">
-                <SectionTitle icon={Eye} title="Live Output Preview" />
+              <button 
+                onClick={() => setIsPreviewOpen(!isPreviewOpen)}
+                className="w-full flex justify-between items-center mb-4 px-2 group"
+              >
+                <div className="flex items-center gap-2">
+                  <div className="text-zinc-400 uppercase tracking-widest text-[10px] font-bold flex items-center gap-2 group-hover:text-blue-500 transition-colors">
+                    {isPreviewOpen ? <Eye size={14} /> : <EyeOff size={14} />}
+                    Live Output Preview {isPreviewOpen ? '' : '(Hidden)'}
+                  </div>
+                </div>
                 <span className="text-[10px] text-zinc-500 bg-zinc-900 px-2 py-1 rounded">Rendering Real-time</span>
-              </div>
-              <div className="bg-zinc-950 rounded-2xl border border-white/5 overflow-hidden shadow-2xl relative h-[500px]">
-                <iframe src={`${previewUrl}#toolbar=0&navpanes=0`} className="w-full h-full opacity-90 hover:opacity-100 transition-opacity" />
-              </div>
+              </button>
+              
+              {isPreviewOpen && (
+                <div className="bg-zinc-950 rounded-2xl border border-white/5 overflow-hidden shadow-2xl relative h-[500px]">
+                  <iframe src={`${previewUrl}#toolbar=0&navpanes=0`} className="w-full h-full opacity-90 hover:opacity-100 transition-opacity" />
+                </div>
+              )}
             </div>
           )}
         </div>
@@ -631,7 +697,7 @@ export default function DigitrikPro() {
           </div>
 
           <button 
-            onClick={handleDownload} 
+            onClick={handleExportClick} 
             disabled={isProcessing || files.length === 0}
             className="w-full py-4 bg-white text-black hover:bg-zinc-200 disabled:bg-zinc-800 disabled:text-zinc-600 rounded-xl font-black text-xs uppercase tracking-widest transition-all flex items-center justify-center gap-2 shadow-lg hover:shadow-xl hover:-translate-y-0.5 active:translate-y-0"
           >
