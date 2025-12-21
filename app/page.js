@@ -9,10 +9,10 @@ import {
   ImageIcon, Eye, AlignLeft, AlignCenter, AlignRight, ChevronUp, Sparkles, X, Check
 } from 'lucide-react';
 
-// --- DATA: FILE ENCYCLOPEDIA ---
+// --- DATABASE: FILE ENCYCLOPEDIA ---
 const fileEncyclopedia = {
   "AI (Adobe Illustrator)": {
-    desc: "Il formato AI è un tipo di file vettoriale proprietario sviluppato da Adobe. A differenza delle immagini composte da pixel, i file AI si basano su percorsi matematici definiti da punti. Questo permette di ridimensionare il contenuto all'infinito senza alcuna perdita di qualità.",
+    desc: "Il formato AI è un tipo di file vettoriale proprietario sviluppato da Adobe. A differenza delle immagini composte da pixel, i file AI si basano su percorsi matematici definiti da punti.",
     curiosity: "Sapevi che internamente un file AI è basato su una versione semplificata del formato PDF? Spesso puoi visualizzarne l'anteprima rinominandolo in .pdf.",
     type: "Immagine Vettoriale"
   },
@@ -272,22 +272,29 @@ export default function DigitrikWorkstation() {
     return () => clearTimeout(timer);
   }, [generatePreview]);
 
-  // --- DROPZONE HANDLERS ---
+  // --- DROPZONE HANDLERS CORRETTI ---
   const onDrop = useCallback(acceptedFiles => {
-    const validTypes = ['application/pdf', 'image/png', 'image/jpeg', 'image/jpg'];
-    const validFiles = acceptedFiles.filter(file => validTypes.includes(file.type));
-    if (validFiles.length < acceptedFiles.length) {
-      alert("⚠️ Alcuni file non sono stati caricati.\nIl sistema supporta SOLO: PDF, PNG, JPG.\nFile come XLSX, DOCX o CSV vengono esclusi automaticamente.");
-    }
-    const newFiles = validFiles.map(file => ({
+    // Qui arrivano SOLO i file validi grazie al filtro di useDropzone
+    const newFiles = acceptedFiles.map(file => ({
       id: `${file.name}-${Date.now()}-${Math.random()}`,
       file: file
     }));
     setFiles(prev => [...prev, ...newFiles]);
   }, []);
 
+  const onDropRejected = useCallback(() => {
+    // Questo scatta se l'utente trascina un file non valido (es. Excel)
+    alert("⚠️ ALCUNI FILE SONO STATI IGNORATI.\n\nIl sistema accetta SOLO:\n- PDF (.pdf)\n- Immagini (.png, .jpg, .jpeg)\n\nI file Word, Excel o altri formati sono supportati solo nell'Enciclopedia.");
+  }, []);
+
   const { getRootProps, getInputProps, isDragActive } = useDropzone({ 
-    onDrop, accept: { 'application/pdf': ['.pdf'], 'image/png': ['.png'], 'image/jpeg': ['.jpg', '.jpeg'] }
+    onDrop, 
+    onDropRejected,
+    accept: { 
+      'application/pdf': ['.pdf'], 
+      'image/png': ['.png'], 
+      'image/jpeg': ['.jpg', '.jpeg'] 
+    }
   });
 
   const onDropLogo = useCallback(acceptedFiles => { if (acceptedFiles.length > 0) setLogoFile(acceptedFiles[0]); }, []);
@@ -432,9 +439,9 @@ export default function DigitrikWorkstation() {
         <h1 className="text-xl font-black italic tracking-tighter text-white uppercase">Digitrik <span className="text-blue-600 font-normal">Core</span></h1>
       </nav>
 
-      {/* --- POPUP RINOMINA (CUSTOM MODAL) --- */}
+      {/* --- POPUP RINOMINA (FIXED: ANIMAZIONI STANDARD) --- */}
       {showRenameModal && (
-        <div className="fixed inset-0 z-[100] flex items-center justify-center bg-black/80 backdrop-blur-sm animate-in fade-in duration-200">
+        <div className="fixed inset-0 z-[100] flex items-center justify-center bg-black/80 backdrop-blur-sm transition-opacity duration-300">
           <div className="bg-[#0a0a0a] border border-blue-600/30 rounded-[2rem] w-[90%] max-w-lg p-8 shadow-[0_0_50px_rgba(37,99,235,0.1)] relative">
             
             {/* Titolo e Icona */}
@@ -569,7 +576,7 @@ export default function DigitrikWorkstation() {
         </div>
 
         <div className="col-span-4 bg-[#0a0a0a] p-8 space-y-6 relative overflow-y-auto max-h-screen">
-          {/* BOTTONE PRINCIPALE MODIFICATO PER APRIRE MODALE */}
+          {/* BOTTONE PRINCIPALE CHE APRE IL MODALE */}
           <button onClick={openRenameModal} disabled={isProcessing} className="w-full bg-blue-600 hover:bg-blue-700 disabled:bg-gray-800 text-white py-8 rounded-[2rem] font-black italic uppercase tracking-widest text-xl transition-all flex flex-col items-center justify-center gap-2 shadow-2xl">
             {isProcessing ? <RefreshCcw className="animate-spin" size={24} /> : <><Wand2 size={24} /><span>ESEGUI TRICK</span></>}
           </button>
