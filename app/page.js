@@ -6,10 +6,10 @@ import { PDFDocument, rgb, degrees, StandardFonts } from 'pdf-lib';
 import { DragDropContext, Droppable, Draggable } from '@hello-pangea/dnd';
 import { 
   FileText, Plus, Trash2, RefreshCcw, Wand2, GripVertical, 
-  ImageIcon, Eye, AlignLeft, AlignCenter, AlignRight, 
+  ImageIcon, Eye, EyeOff, AlignLeft, AlignCenter, AlignRight, 
   Sparkles, X, Check, RotateCw, Tag, Activity, ShieldAlert, 
   Feather, Layers, Printer, Ghost, Lock, Settings, LayoutTemplate, 
-  Image as IconImage, Shield, FileOutput, UploadCloud, Search
+  Image as IconImage, Shield, FileOutput, UploadCloud, Grid3X3, Ban
 } from 'lucide-react';
 
 // --- UTILS & DATA ---
@@ -73,7 +73,7 @@ const Toggle = ({ label, checked, onChange, icon: Icon, subLabel }) => (
   >
     <div className="flex items-center gap-3">
       <div className={`p-2 rounded-lg ${checked ? 'bg-blue-500 text-white' : 'bg-zinc-800 text-zinc-500 group-hover:text-zinc-300'}`}>
-        {Icon && <Icon size={16} />}
+        {Icon ? <Icon size={16} /> : <Check size={16} />}
       </div>
       <div>
         <span className={`block text-xs font-bold ${checked ? 'text-blue-400' : 'text-zinc-300'}`}>{label}</span>
@@ -87,7 +87,7 @@ const Toggle = ({ label, checked, onChange, icon: Icon, subLabel }) => (
 );
 
 const Toast = ({ message, type, onClose }) => (
-  <div className={`fixed bottom-8 right-8 z-50 flex items-center gap-3 px-6 py-4 rounded-2xl shadow-2xl backdrop-blur-md border animate-in slide-in-from-bottom-5 fade-in duration-300 ${type === 'error' ? 'bg-red-950/80 border-red-500/30 text-red-200' : 'bg-zinc-900/90 border-blue-500/30 text-zinc-100'}`}>
+  <div className={`fixed bottom-8 right-8 z-[100] flex items-center gap-3 px-6 py-4 rounded-2xl shadow-2xl backdrop-blur-md border animate-in slide-in-from-bottom-5 fade-in duration-300 ${type === 'error' ? 'bg-red-950/80 border-red-500/30 text-red-200' : 'bg-zinc-900/90 border-blue-500/30 text-zinc-100'}`}>
     {type === 'error' ? <ShieldAlert size={20} className="text-red-500" /> : <Check size={20} className="text-blue-500" />}
     <div className="text-sm font-medium">{message}</div>
     <button onClick={onClose}><X size={14} className="opacity-50 hover:opacity-100" /></button>
@@ -98,7 +98,7 @@ const Toast = ({ message, type, onClose }) => (
 export default function DigitrikPro() {
   // CORE STATE
   const [files, setFiles] = useState([]);
-  const [activeTab, setActiveTab] = useState('files'); // files, layout, watermark, security, export
+  const [activeTab, setActiveTab] = useState('files'); 
   const [previewUrl, setPreviewUrl] = useState(null);
   const [isProcessing, setIsProcessing] = useState(false);
   const [toast, setToast] = useState(null);
@@ -110,9 +110,11 @@ export default function DigitrikPro() {
     useFooter: false, footerText: '', footerAlign: 'center',
     usePagination: false, paginationAlign: 'right',
     rotation: 0,
-    // Matrix
+    // Matrix / Watermark (RESTORED)
     watermarkText: '', textOpacity: 0.25, textSize: 30,
-    useWatermark: false, useGrid: false, useSecurity: false,
+    useWatermark: false, // Nastro
+    useGrid: false,      // Griglia
+    useSecurity: false,  // Security Central
     // Logo
     useLogo: false, logoFile: null, logoOpacity: 0.15, logoSize: 150,
     // Security & Ghost
@@ -120,8 +122,8 @@ export default function DigitrikPro() {
     metaTitle: '', metaAuthor: '',
     encryptPdf: false, userPassword: '', ownerPassword: '',
     // Performance
-    compression: 'balanced', // web, balanced, print
-    action: 'conversione', // conversione, unisci, estrai
+    compression: 'balanced', 
+    action: 'conversione', 
     extractRange: ''
   });
 
@@ -136,9 +138,8 @@ export default function DigitrikPro() {
     
     let score = 100;
     if (mb > 20) score -= 20;
-    if (config.useWatermark && config.textOpacity > 0.5) score -= 10;
-    if (files.some(f => f.file.type === 'text/plain')) score -= 5;
-
+    if ((config.useWatermark || config.useGrid) && config.textOpacity > 0.5) score -= 10;
+    
     setHealth({
       size: mb.toFixed(2),
       status: score > 80 ? 'ok' : score > 50 ? 'warn' : 'crit',
@@ -154,18 +155,18 @@ export default function DigitrikPro() {
   // --- LOGIC: DROPZONE ---
   const onDrop = useCallback(accepted => {
     const valid = accepted.filter(f => ['application/pdf', 'image/png', 'image/jpeg', 'image/jpg', 'text/plain', 'text/csv'].includes(f.type) || f.name.endsWith('.csv'));
-    if (valid.length < accepted.length) showToast("Alcuni file non supportati sono stati ignorati.", "error");
+    if (valid.length < accepted.length) showToast("File non supportati ignorati.", "error");
     
     setFiles(prev => [...prev, ...valid.map(f => ({ id: Math.random().toString(36), file: f }))]);
-    if (valid.length > 0) showToast(`${valid.length} file aggiunti al workspace.`);
+    if (valid.length > 0) showToast(`${valid.length} file aggiunti.`);
   }, []);
 
-  const { getRootProps, getInputProps, isDragActive } = useDropzone({ onDrop, noClick: true }); // noClick handled by button
+  const { getRootProps, getInputProps, isDragActive } = useDropzone({ onDrop, noClick: true });
 
   const onLogoDrop = useCallback(accepted => {
     if (accepted[0]) {
       setConfig(prev => ({ ...prev, logoFile: accepted[0], useLogo: true }));
-      showToast("Logo caricato e attivato.");
+      showToast("Logo caricato.");
     }
   }, []);
   const { getRootProps: getLogoProps, getInputProps: getLogoInput } = useDropzone({ onDrop: onLogoDrop, accept: {'image/*': []}, multiple: false });
@@ -173,10 +174,17 @@ export default function DigitrikPro() {
   // --- LOGIC: PDF ENGINE ---
   const generatePdf = async (isPreview = false) => {
     if (files.length === 0) return null;
+    
+    // Check preliminare crittografia
+    if (!isPreview && config.encryptPdf && !config.userPassword) {
+      showToast("Password mancante per la crittografia!", "error");
+      throw new Error("Password missing");
+    }
+
     try {
       const doc = await PDFDocument.create();
       
-      // Metadata & Security (Solo se non è preview)
+      // Metadata
       if (!isPreview) {
         if (config.ghostMode) {
           doc.setTitle(""); doc.setAuthor(""); doc.setCreator("Ghost"); doc.setProducer("");
@@ -188,7 +196,6 @@ export default function DigitrikPro() {
         }
       }
 
-      // Fonts
       const fontBold = await doc.embedFont(StandardFonts.HelveticaBold);
       const fontNormal = await doc.embedFont(StandardFonts.Helvetica);
       const fontMono = await doc.embedFont(StandardFonts.Courier);
@@ -196,8 +203,6 @@ export default function DigitrikPro() {
       // Processing Files
       for (const f of files) {
         let buffer;
-        
-        // Smart Compression
         if (f.file.type.startsWith('image/') && !isPreview) {
           if (config.compression === 'web') buffer = await (await compressImage(f.file, 0.6, 0.6)).arrayBuffer();
           else if (config.compression === 'balanced') buffer = await (await compressImage(f.file, 0.8, 0.8)).arrayBuffer();
@@ -209,9 +214,7 @@ export default function DigitrikPro() {
         if (f.file.type === 'application/pdf') {
           const srcDoc = await PDFDocument.load(buffer);
           let indices = srcDoc.getPageIndices();
-          
           if (config.action === 'estrai' && config.extractRange) {
-             // Simple extraction logic parser
              const parts = config.extractRange.split(',');
              const targets = [];
              parts.forEach(p => {
@@ -222,7 +225,6 @@ export default function DigitrikPro() {
              });
              indices = targets.filter(i => i >= 0 && i < srcDoc.getPageCount());
           }
-          
           const pages = await doc.copyPages(srcDoc, indices);
           pages.forEach(p => doc.addPage(p));
         } else if (f.file.type.startsWith('image/')) {
@@ -232,7 +234,6 @@ export default function DigitrikPro() {
           const dims = img.scaleToFit(page.getWidth() - 40, page.getHeight() - 40);
           page.drawImage(img, { x: page.getWidth()/2 - dims.width/2, y: page.getHeight()/2 - dims.height/2, width: dims.width, height: dims.height });
         } else if (f.file.type.includes('text')) {
-          // Text rendering logic simplified
           const txt = await f.file.text();
           const page = doc.addPage();
           page.drawText(txt.substring(0, 3000), { x: 50, y: 800, size: 10, font: fontMono, maxWidth: 500, lineHeight: 12 });
@@ -257,32 +258,63 @@ export default function DigitrikPro() {
         if (config.useFooter) p.drawText(config.footerText, { x: width/2 - 20, y: 30, size: 9, font: fontNormal, color: rgb(0.2,0.2,0.2) });
         if (config.usePagination) p.drawText(`${idx+1} / ${pages.length}`, { x: width - 60, y: 30, size: 9, font: fontNormal });
 
-        // Watermarks
+        // --- WATERMARK RESTORED LOGIC ---
         if (config.watermarkText) {
+          const textW = fontBold.widthOfTextAtSize(config.watermarkText, config.textSize);
+          
+          // 1. Nastro (Diagonale Ripetuto)
           if (config.useWatermark) {
-             p.drawText(config.watermarkText, { x: width/2 - 100, y: height/2, size: config.textSize, font: fontBold, opacity: config.textOpacity, rotate: degrees(45), color: rgb(0.5,0.5,0.5) });
+             for (let x = -width; x < width * 2; x += (textW / 2) + 100) {
+               for (let y = -height; y < height * 2; y += 150) {
+                 p.drawText(config.watermarkText, { x, y, size: config.textSize, font: fontBold, opacity: config.textOpacity, rotate: degrees(45), color: rgb(0.5,0.5,0.5) });
+               }
+             }
           }
+          // 2. Griglia (Fitta)
+          if (config.useGrid) {
+             for (let x = 30; x < width; x += 150) {
+               for (let y = 30; y < height; y += 100) {
+                 p.drawText(config.watermarkText.substring(0, 15), { x, y, size: config.textSize * 0.6, font: fontBold, opacity: config.textOpacity, color: rgb(0.4,0.4,0.4) });
+               }
+             }
+          }
+          // 3. Security (Centrale Rotated)
           if (config.useSecurity) {
-             p.drawText(config.watermarkText, { x: width/2, y: height/2, size: config.textSize, font: fontBold, opacity: config.textOpacity, rotate: degrees(45), color: rgb(0.8,0.2,0.2) });
+             p.drawText(config.watermarkText, { x: width/2 - 50, y: height/2, size: config.textSize * 1.5, font: fontBold, opacity: config.textOpacity, rotate: degrees(45), color: rgb(0.8,0.2,0.2) });
           }
         }
 
-        // Logo
+        // Logo Logic (Restored Grid)
         if (logoImg) {
           const dims = logoImg.scaleToFit(config.logoSize, config.logoSize);
-          p.drawImage(logoImg, { x: width/2 - dims.width/2, y: height/2 - dims.height/2, width: dims.width, height: dims.height, opacity: config.logoOpacity });
+          if (config.useLogo) {
+             // Se è logo normale
+             p.drawImage(logoImg, { x: width/2 - dims.width/2, y: height/2 - dims.height/2, width: dims.width, height: dims.height, opacity: config.logoOpacity });
+          }
         }
       });
 
-      // Encryption (Final Step)
+      // Encryption (FIXED)
       if (!isPreview && config.encryptPdf && config.userPassword) {
-        doc.encrypt({ userPassword: config.userPassword, ownerPassword: config.ownerPassword || config.userPassword, permissions: { printing: 'highResolution' } });
+        doc.encrypt({
+          userPassword: config.userPassword,
+          ownerPassword: config.ownerPassword || config.userPassword,
+          permissions: {
+            printing: 'highResolution',
+            modifying: false,
+            copying: false,
+            annotating: false,
+            fillingForms: false,
+            contentAccessibility: false,
+            documentAssembly: false,
+          },
+        });
       }
 
       return await doc.save();
     } catch (e) {
       console.error(e);
-      if(!isPreview) showToast("Errore durante la generazione.", "error");
+      if(!isPreview && e.message !== "Password missing") showToast("Errore durante la generazione PDF.", "error");
       return null;
     }
   };
@@ -303,6 +335,12 @@ export default function DigitrikPro() {
   }, [files, config]);
 
   const handleDownload = async () => {
+    if (config.encryptPdf && !config.userPassword) {
+      showToast("Inserisci una password per criptare il file!", "error");
+      setActiveTab('security');
+      return;
+    }
+    
     setIsProcessing(true);
     const pdfBytes = await generatePdf(false);
     if (pdfBytes) {
@@ -317,7 +355,7 @@ export default function DigitrikPro() {
     setIsProcessing(false);
   };
 
-  // --- RENDER HELPERS ---
+  // --- UI HELPERS ---
   const NavItem = ({ id, icon: Icon, label }) => (
     <button 
       onClick={() => setActiveTab(id)}
@@ -331,7 +369,7 @@ export default function DigitrikPro() {
   return (
     <div className="h-screen bg-zinc-950 text-zinc-100 font-sans flex overflow-hidden selection:bg-blue-500/30">
       
-      {/* 1. LEFT SIDEBAR: NAVIGATION */}
+      {/* 1. LEFT SIDEBAR */}
       <aside className="w-64 border-r border-white/5 bg-zinc-950 flex flex-col p-4 z-20">
         <div className="mb-8 px-2 flex items-center gap-2">
           <div className="w-8 h-8 bg-blue-600 rounded-lg flex items-center justify-center">
@@ -350,11 +388,10 @@ export default function DigitrikPro() {
           
           <div className="h-6" />
           <SectionTitle icon={Shield} title="Security & Brand" />
-          <NavItem id="watermark" icon={ImageIcon} label="Watermark" />
+          <NavItem id="watermark" icon={ImageIcon} label="Watermark & Logo" />
           <NavItem id="security" icon={Lock} label="Vault & Ghost" />
         </nav>
 
-        {/* HEALTH WIDGET */}
         <div className={`mt-auto p-4 rounded-2xl border ${health.status === 'crit' ? 'bg-red-950/20 border-red-500/20' : 'bg-zinc-900 border-white/5'}`}>
           <div className="flex justify-between items-end mb-2">
             <span className="text-[10px] font-bold text-zinc-500 uppercase">System Health</span>
@@ -369,9 +406,8 @@ export default function DigitrikPro() {
         </div>
       </aside>
 
-      {/* 2. CENTER STAGE: WORKSPACE */}
+      {/* 2. CENTER STAGE */}
       <main className="flex-1 flex flex-col relative bg-zinc-900/50">
-        {/* Toolbar */}
         <header className="h-16 border-b border-white/5 flex items-center justify-between px-8 bg-zinc-950/80 backdrop-blur-md sticky top-0 z-10">
           <div className="flex items-center gap-4">
             <h2 className="text-sm font-bold text-zinc-300 uppercase tracking-wider">
@@ -385,12 +421,10 @@ export default function DigitrikPro() {
           </div>
         </header>
 
-        {/* Scrollable Content */}
         <div className="flex-1 overflow-y-auto p-8">
           <div {...getRootProps()} className={`relative border-2 border-dashed rounded-[2rem] transition-all duration-300 group ${isDragActive ? 'border-blue-500 bg-blue-500/5 scale-[0.99]' : 'border-zinc-800 hover:border-zinc-700 hover:bg-zinc-900/50'}`}>
             <input {...getInputProps()} />
             
-            {/* Conditional View: Empty vs Files */}
             {files.length === 0 ? (
               <div className="h-64 flex flex-col items-center justify-center text-center p-10 cursor-pointer">
                 <div className="w-16 h-16 bg-zinc-900 rounded-2xl flex items-center justify-center mb-4 group-hover:scale-110 transition-transform shadow-2xl">
@@ -401,7 +435,6 @@ export default function DigitrikPro() {
               </div>
             ) : (
               <div className="p-8">
-                {/* File List Grid */}
                 <DragDropContext onDragEnd={(res) => {
                   if(!res.destination) return;
                   const items = Array.from(files);
@@ -431,7 +464,6 @@ export default function DigitrikPro() {
                           </Draggable>
                         ))}
                         {provided.placeholder}
-                        {/* Add Button */}
                         <div className="border border-dashed border-zinc-800 rounded-xl flex flex-col items-center justify-center p-4 hover:bg-zinc-900/50 transition-colors cursor-pointer text-zinc-600 hover:text-zinc-400">
                           <Plus size={24} />
                           <span className="text-[10px] font-bold mt-2 uppercase">Aggiungi</span>
@@ -444,7 +476,6 @@ export default function DigitrikPro() {
             )}
           </div>
 
-          {/* Live Preview Section */}
           {previewUrl && (
             <div className="mt-8 animate-in fade-in slide-in-from-bottom-4 duration-500">
               <div className="flex justify-between items-center mb-4 px-2">
@@ -453,21 +484,16 @@ export default function DigitrikPro() {
               </div>
               <div className="bg-zinc-950 rounded-2xl border border-white/5 overflow-hidden shadow-2xl relative h-[500px]">
                 <iframe src={`${previewUrl}#toolbar=0&navpanes=0`} className="w-full h-full opacity-90 hover:opacity-100 transition-opacity" />
-                {/* Overlay Grid Effect */}
-                <div className="absolute inset-0 pointer-events-none bg-[url('https://grainy-gradients.vercel.app/noise.svg')] opacity-10 mix-blend-overlay"></div>
               </div>
             </div>
           )}
         </div>
       </main>
 
-      {/* 3. RIGHT SIDEBAR: INSPECTOR */}
+      {/* 3. RIGHT SIDEBAR */}
       <aside className="w-80 border-l border-white/5 bg-zinc-950 p-6 flex flex-col overflow-y-auto">
-        
-        {/* Dynamic Contextual Controls */}
         <div className="flex-1 space-y-8">
           
-          {/* TAB 1: FILE ACTIONS */}
           {activeTab === 'files' && (
             <div className="space-y-6 animate-in fade-in slide-in-from-right-2">
               <div>
@@ -493,66 +519,51 @@ export default function DigitrikPro() {
                   ))}
                 </div>
               </div>
-
               {config.action === 'estrai' && (
                 <div className="p-4 bg-zinc-900 rounded-xl border border-zinc-800">
                   <label className="text-[10px] font-bold text-zinc-400 uppercase mb-2 block">Range Pagine (es. 1-3, 5)</label>
-                  <input 
-                    type="text" 
-                    placeholder="E.g. 1, 3-5" 
-                    value={config.extractRange} 
-                    onChange={e => setConfig({...config, extractRange: e.target.value})}
-                    className="w-full bg-zinc-950 border border-zinc-800 rounded-lg p-2 text-xs text-white focus:border-blue-500 outline-none"
-                  />
+                  <input type="text" placeholder="E.g. 1, 3-5" value={config.extractRange} onChange={e => setConfig({...config, extractRange: e.target.value})} className="w-full bg-zinc-950 border border-zinc-800 rounded-lg p-2 text-xs text-white focus:border-blue-500 outline-none" />
                 </div>
               )}
             </div>
           )}
 
-          {/* TAB 2: LAYOUT */}
           {activeTab === 'layout' && (
             <div className="space-y-6 animate-in fade-in slide-in-from-right-2">
               <SectionTitle icon={LayoutTemplate} title="Struttura Pagina" />
-              
               <div className="space-y-4">
                 <div className="p-4 bg-zinc-900 rounded-xl border border-zinc-800 space-y-3">
                   <Toggle label="Intestazione" checked={config.useHeader} onChange={v => setConfig({...config, useHeader: v})} icon={AlignLeft} />
-                  {config.useHeader && (
-                    <input type="text" placeholder="Testo Header..." value={config.headerText} onChange={e => setConfig({...config, headerText: e.target.value})} className="w-full bg-zinc-950 border border-zinc-800 rounded-lg p-2 text-xs text-white outline-none" />
-                  )}
+                  {config.useHeader && <input type="text" placeholder="Testo Header..." value={config.headerText} onChange={e => setConfig({...config, headerText: e.target.value})} className="w-full bg-zinc-950 border border-zinc-800 rounded-lg p-2 text-xs text-white outline-none" />}
                 </div>
-
                 <div className="p-4 bg-zinc-900 rounded-xl border border-zinc-800 space-y-3">
                   <Toggle label="Piè di Pagina" checked={config.useFooter} onChange={v => setConfig({...config, useFooter: v})} icon={AlignRight} />
-                  {config.useFooter && (
-                    <input type="text" placeholder="Testo Footer..." value={config.footerText} onChange={e => setConfig({...config, footerText: e.target.value})} className="w-full bg-zinc-950 border border-zinc-800 rounded-lg p-2 text-xs text-white outline-none" />
-                  )}
+                  {config.useFooter && <input type="text" placeholder="Testo Footer..." value={config.footerText} onChange={e => setConfig({...config, footerText: e.target.value})} className="w-full bg-zinc-950 border border-zinc-800 rounded-lg p-2 text-xs text-white outline-none" />}
                 </div>
-
                 <Toggle label="Numerazione Pagine" checked={config.usePagination} onChange={v => setConfig({...config, usePagination: v})} icon={List} subLabel="Automatico in basso a destra" />
               </div>
-
               <SectionTitle icon={RotateCw} title="Correzione" />
               <div className="grid grid-cols-4 gap-2">
                 {[0, 90, 180, 270].map(deg => (
-                  <button key={deg} onClick={() => setConfig({...config, rotation: deg})} className={`py-2 rounded-lg text-xs font-bold border transition-all ${config.rotation === deg ? 'bg-blue-600 border-blue-600 text-white' : 'bg-zinc-900 border-zinc-800 text-zinc-500 hover:text-zinc-300'}`}>
-                    {deg}°
-                  </button>
+                  <button key={deg} onClick={() => setConfig({...config, rotation: deg})} className={`py-2 rounded-lg text-xs font-bold border transition-all ${config.rotation === deg ? 'bg-blue-600 border-blue-600 text-white' : 'bg-zinc-900 border-zinc-800 text-zinc-500 hover:text-zinc-300'}`}>{deg}°</button>
                 ))}
               </div>
             </div>
           )}
 
-          {/* TAB 3: WATERMARK */}
           {activeTab === 'watermark' && (
             <div className="space-y-6 animate-in fade-in slide-in-from-right-2">
               <SectionTitle icon={Tag} title="Filigrana Testuale" />
               <div className="p-4 bg-zinc-900 rounded-xl border border-zinc-800 space-y-4">
                 <input type="text" placeholder="Testo filigrana (es. BOZZA)" value={config.watermarkText} onChange={e => setConfig({...config, watermarkText: e.target.value})} className="w-full bg-zinc-950 border border-zinc-800 rounded-lg p-3 text-xs font-bold text-white outline-none focus:border-blue-500" />
-                <div className="grid grid-cols-2 gap-2">
-                  <Toggle label="Standard" checked={config.useWatermark} onChange={v => setConfig({...config, useWatermark: v})} />
-                  <Toggle label="Sicurezza" checked={config.useSecurity} onChange={v => setConfig({...config, useSecurity: v})} />
+                
+                {/* RESTORED MATRIX TOGGLES */}
+                <div className="space-y-2">
+                  <Toggle label="Nastro (Diagonale)" checked={config.useWatermark} onChange={v => setConfig({...config, useWatermark: v})} icon={Sparkles} />
+                  <Toggle label="Griglia Fitta" checked={config.useGrid} onChange={v => setConfig({...config, useGrid: v})} icon={Grid3X3} />
+                  <Toggle label="Security Alert" checked={config.useSecurity} onChange={v => setConfig({...config, useSecurity: v})} icon={ShieldAlert} />
                 </div>
+
                 <SmartSlider label="Opacità" value={Math.round(config.textOpacity*100)} min={5} max={100} onChange={v => setConfig({...config, textOpacity: v/100})} unit="%" />
                 <SmartSlider label="Grandezza" value={config.textSize} min={10} max={100} onChange={v => setConfig({...config, textSize: parseInt(v)})} unit="px" />
               </div>
@@ -584,11 +595,8 @@ export default function DigitrikPro() {
             </div>
           )}
 
-          {/* TAB 4: SECURITY & GHOST */}
           {activeTab === 'security' && (
             <div className="space-y-6 animate-in fade-in slide-in-from-right-2">
-              
-              {/* GHOST MODE */}
               <div className={`p-4 rounded-xl border transition-all ${config.ghostMode ? 'bg-red-950/20 border-red-500/50' : 'bg-zinc-900 border-zinc-800'}`}>
                 <div className="flex items-center justify-between mb-2">
                   <div className="flex items-center gap-2 text-red-500 font-bold uppercase text-xs">
@@ -597,24 +605,22 @@ export default function DigitrikPro() {
                   <input type="checkbox" checked={config.ghostMode} onChange={e => setConfig({...config, ghostMode: e.target.checked})} className="accent-red-500 w-4 h-4" />
                 </div>
                 <p className="text-[10px] text-zinc-500 leading-relaxed">
-                  Rimuove tutti i metadati (autore, data, software) e sanitizza il file per l'anonimato totale.
+                  Rimuove metadati, autore e data creazione per l'anonimato.
                 </p>
               </div>
 
-              {/* VAULT ENCRYPTION */}
               <div className="space-y-3">
                 <SectionTitle icon={Lock} title="Vault Encryption (AES-256)" />
                 <Toggle label="Cripta Documento" checked={config.encryptPdf} onChange={v => setConfig({...config, encryptPdf: v})} icon={Lock} />
                 
                 {config.encryptPdf && (
                   <div className="space-y-3 p-3 bg-zinc-900 rounded-xl border border-zinc-800 animate-in fade-in slide-in-from-top-2">
-                    <input type="password" placeholder="Password Utente (Apertura)" value={config.userPassword} onChange={e => setConfig({...config, userPassword: e.target.value})} className="w-full bg-zinc-950 border border-zinc-700 rounded-lg p-2 text-xs text-white outline-none focus:border-blue-500" />
-                    <input type="password" placeholder="Password Master (Permessi)" value={config.ownerPassword} onChange={e => setConfig({...config, ownerPassword: e.target.value})} className="w-full bg-zinc-950 border border-zinc-700 rounded-lg p-2 text-xs text-white outline-none focus:border-blue-500" />
+                    <input type="password" placeholder="Password Utente (Obbligatoria)" value={config.userPassword} onChange={e => setConfig({...config, userPassword: e.target.value})} className="w-full bg-zinc-950 border border-zinc-700 rounded-lg p-2 text-xs text-white outline-none focus:border-blue-500 ring-1 ring-blue-500/20" />
+                    <input type="password" placeholder="Password Master (Opzionale)" value={config.ownerPassword} onChange={e => setConfig({...config, ownerPassword: e.target.value})} className="w-full bg-zinc-950 border border-zinc-700 rounded-lg p-2 text-xs text-white outline-none focus:border-blue-500" />
                   </div>
                 )}
               </div>
 
-              {/* METADATA (Only if not Ghost) */}
               {!config.ghostMode && (
                 <div className="space-y-3 pt-4 border-t border-white/5">
                   <SectionTitle icon={Tag} title="Metadati Pubblici" />
@@ -624,12 +630,9 @@ export default function DigitrikPro() {
               )}
             </div>
           )}
-
         </div>
 
-        {/* BOTTOM: EXPORT BUTTON */}
         <div className="pt-6 border-t border-white/5 mt-auto">
-          {/* Compression Selector */}
           <div className="flex bg-zinc-900 p-1 rounded-lg mb-4">
             {[{id:'web', l:'Web', i:Feather}, {id:'balanced', l:'Std', i:Layers}, {id:'print', l:'Pro', i:Printer}].map(c => (
               <button key={c.id} onClick={() => setConfig({...config, compression: c.id})} className={`flex-1 flex items-center justify-center gap-2 py-2 rounded-md text-[10px] font-bold uppercase transition-all ${config.compression === c.id ? 'bg-zinc-800 text-white shadow-sm' : 'text-zinc-500 hover:text-zinc-300'}`}>
@@ -649,7 +652,6 @@ export default function DigitrikPro() {
         </div>
       </aside>
 
-      {/* TOAST CONTAINER */}
       {toast && <Toast message={toast.msg} type={toast.type} onClose={() => setToast(null)} />}
     </div>
   );
