@@ -338,44 +338,6 @@ export default function DigitrikWorkstation() {
         </div>
 
         <div className="col-span-4 bg-[#0a0a0a] p-8 space-y-6 relative overflow-y-auto max-h-screen">
-          
-          {/* BANNER PUBBLICITARIO POSIZIONATO IN ALTO PER MASSIMA VISIBILITÀ */}
-          <div className="w-full group">
-            <a 
-              href="#" 
-              onClick={(e) => e.preventDefault()} 
-              className="block bg-[#1a1a1a] border border-blue-500/40 rounded-[2rem] p-5 flex items-center justify-between group-hover:border-blue-500 group-hover:bg-[#222] transition-all cursor-pointer relative overflow-hidden shadow-2xl shadow-blue-900/10 z-10"
-            >
-              <div className="absolute top-0 right-0 w-32 h-32 bg-blue-600/10 blur-3xl -mr-10 -mt-10" />
-              <div className="flex items-center gap-4 relative z-20">
-                <div className="w-12 h-12 bg-blue-600 rounded-2xl flex items-center justify-center border border-blue-400/30 shadow-[0_0_15px_rgba(37,99,235,0.4)] relative">
-                  {/* ICONA FULMINE IN SVG PURO (per evitare problemi di caricamento librerie) */}
-                  <svg 
-                    width="20" 
-                    height="20" 
-                    viewBox="0 0 24 24" 
-                    fill="white" 
-                    stroke="white" 
-                    strokeWidth="2" 
-                    strokeLinecap="round" 
-                    strokeLinejoin="round" 
-                    className="relative z-30"
-                  >
-                    <polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"></polygon>
-                  </svg>
-                </div>
-                <div>
-                  <h4 className="text-sm font-black text-white tracking-tight flex items-center gap-2">
-                    DIGITRIK PREMIUM <span className="bg-blue-500 text-[9px] px-1.5 py-0.5 rounded italic">NEW</span>
-                  </h4>
-                  <p className="text-[10px] text-gray-400 font-bold uppercase tracking-tight mt-1">
-                    Velocità 2x e processi illimitati
-                  </p>
-                </div>
-              </div>
-              <ChevronRight size={20} className="text-blue-500 group-hover:translate-x-1 transition-transform relative z-20" />
-            </a>
-          </div>
 
           <button onClick={executeTrick} disabled={isProcessing} className="w-full bg-blue-600 hover:bg-blue-700 disabled:bg-gray-800 text-white py-8 rounded-[2rem] font-black italic uppercase tracking-widest text-xl transition-all flex flex-col items-center justify-center gap-2 shadow-2xl">
             {isProcessing ? <RefreshCcw className="animate-spin" size={24} /> : <><Wand2 size={24} /><span>ESEGUI TRICK</span></>}
