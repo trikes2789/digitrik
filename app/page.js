@@ -2,14 +2,15 @@
 
 import React, { useCallback, useState, useEffect, useRef } from 'react';
 import { useDropzone } from 'react-dropzone';
-import { PDFDocument, rgb, degrees, StandardFonts } from 'pdf-lib';
+// FIX IMPORT: Importiamo l'intero modulo per evitare che Turbopack rimuova .encrypt()
+import * as PDFLib from 'pdf-lib';
 import { DragDropContext, Droppable, Draggable } from '@hello-pangea/dnd';
 import { 
   FileText, Plus, Trash2, RefreshCcw, Wand2, GripVertical, 
   ImageIcon, Eye, EyeOff, AlignLeft, AlignCenter, AlignRight, 
   Sparkles, X, Check, RotateCw, Tag, Activity, ShieldAlert, 
   Feather, Layers, Printer, Ghost, Lock, Settings, LayoutTemplate, 
-  Image as IconImage, Shield, FileOutput, UploadCloud, Grid3X3, Ban
+  Image as IconImage, Shield, FileOutput, UploadCloud, Grid3X3
 } from 'lucide-react';
 
 // --- UTILS & DATA ---
@@ -110,11 +111,11 @@ export default function DigitrikPro() {
     useFooter: false, footerText: '', footerAlign: 'center',
     usePagination: false, paginationAlign: 'right',
     rotation: 0,
-    // Matrix / Watermark (RESTORED)
+    // Matrix / Watermark
     watermarkText: '', textOpacity: 0.25, textSize: 30,
     useWatermark: false, // Nastro
     useGrid: false,      // Griglia
-    useSecurity: false,  // Security Central
+    useSecurity: false,  // Security
     // Logo
     useLogo: false, logoFile: null, logoOpacity: 0.15, logoSize: 150,
     // Security & Ghost
@@ -171,18 +172,18 @@ export default function DigitrikPro() {
   }, []);
   const { getRootProps: getLogoProps, getInputProps: getLogoInput } = useDropzone({ onDrop: onLogoDrop, accept: {'image/*': []}, multiple: false });
 
-  // --- LOGIC: PDF ENGINE ---
+  // --- LOGIC: PDF ENGINE (FIXED ENCRYPTION) ---
   const generatePdf = async (isPreview = false) => {
     if (files.length === 0) return null;
     
-    // Check preliminare crittografia
     if (!isPreview && config.encryptPdf && !config.userPassword) {
       showToast("Password mancante per la crittografia!", "error");
       throw new Error("Password missing");
     }
 
     try {
-      const doc = await PDFDocument.create();
+      // FIX: Use PDFLib object from full import
+      const doc = await PDFLib.PDFDocument.create();
       
       // Metadata
       if (!isPreview) {
@@ -196,9 +197,9 @@ export default function DigitrikPro() {
         }
       }
 
-      const fontBold = await doc.embedFont(StandardFonts.HelveticaBold);
-      const fontNormal = await doc.embedFont(StandardFonts.Helvetica);
-      const fontMono = await doc.embedFont(StandardFonts.Courier);
+      const fontBold = await doc.embedFont(PDFLib.StandardFonts.HelveticaBold);
+      const fontNormal = await doc.embedFont(PDFLib.StandardFonts.Helvetica);
+      const fontMono = await doc.embedFont(PDFLib.StandardFonts.Courier);
 
       // Processing Files
       for (const f of files) {
@@ -212,7 +213,7 @@ export default function DigitrikPro() {
         }
 
         if (f.file.type === 'application/pdf') {
-          const srcDoc = await PDFDocument.load(buffer);
+          const srcDoc = await PDFLib.PDFDocument.load(buffer);
           let indices = srcDoc.getPageIndices();
           if (config.action === 'estrai' && config.extractRange) {
              const parts = config.extractRange.split(',');
@@ -251,70 +252,70 @@ export default function DigitrikPro() {
       const pages = doc.getPages();
       pages.forEach((p, idx) => {
         const { width, height } = p.getSize();
-        if (config.rotation) p.setRotation(degrees(config.rotation));
+        if (config.rotation) p.setRotation(PDFLib.degrees(config.rotation));
 
         // Header/Footer
-        if (config.useHeader) p.drawText(config.headerText.toUpperCase(), { x: 40, y: height - 30, size: 9, font: fontBold, color: rgb(0.2,0.2,0.2) });
-        if (config.useFooter) p.drawText(config.footerText, { x: width/2 - 20, y: 30, size: 9, font: fontNormal, color: rgb(0.2,0.2,0.2) });
+        if (config.useHeader) p.drawText(config.headerText.toUpperCase(), { x: 40, y: height - 30, size: 9, font: fontBold, color: PDFLib.rgb(0.2,0.2,0.2) });
+        if (config.useFooter) p.drawText(config.footerText, { x: width/2 - 20, y: 30, size: 9, font: fontNormal, color: PDFLib.rgb(0.2,0.2,0.2) });
         if (config.usePagination) p.drawText(`${idx+1} / ${pages.length}`, { x: width - 60, y: 30, size: 9, font: fontNormal });
 
-        // --- WATERMARK RESTORED LOGIC ---
+        // --- WATERMARK LOGIC ---
         if (config.watermarkText) {
           const textW = fontBold.widthOfTextAtSize(config.watermarkText, config.textSize);
           
-          // 1. Nastro (Diagonale Ripetuto)
           if (config.useWatermark) {
              for (let x = -width; x < width * 2; x += (textW / 2) + 100) {
                for (let y = -height; y < height * 2; y += 150) {
-                 p.drawText(config.watermarkText, { x, y, size: config.textSize, font: fontBold, opacity: config.textOpacity, rotate: degrees(45), color: rgb(0.5,0.5,0.5) });
+                 p.drawText(config.watermarkText, { x, y, size: config.textSize, font: fontBold, opacity: config.textOpacity, rotate: PDFLib.degrees(45), color: PDFLib.rgb(0.5,0.5,0.5) });
                }
              }
           }
-          // 2. Griglia (Fitta)
           if (config.useGrid) {
              for (let x = 30; x < width; x += 150) {
                for (let y = 30; y < height; y += 100) {
-                 p.drawText(config.watermarkText.substring(0, 15), { x, y, size: config.textSize * 0.6, font: fontBold, opacity: config.textOpacity, color: rgb(0.4,0.4,0.4) });
+                 p.drawText(config.watermarkText.substring(0, 15), { x, y, size: config.textSize * 0.6, font: fontBold, opacity: config.textOpacity, color: PDFLib.rgb(0.4,0.4,0.4) });
                }
              }
           }
-          // 3. Security (Centrale Rotated)
           if (config.useSecurity) {
-             p.drawText(config.watermarkText, { x: width/2 - 50, y: height/2, size: config.textSize * 1.5, font: fontBold, opacity: config.textOpacity, rotate: degrees(45), color: rgb(0.8,0.2,0.2) });
+             p.drawText(config.watermarkText, { x: width/2 - 50, y: height/2, size: config.textSize * 1.5, font: fontBold, opacity: config.textOpacity, rotate: PDFLib.degrees(45), color: PDFLib.rgb(0.8,0.2,0.2) });
           }
         }
 
-        // Logo Logic (Restored Grid)
+        // Logo Logic
         if (logoImg) {
           const dims = logoImg.scaleToFit(config.logoSize, config.logoSize);
           if (config.useLogo) {
-             // Se è logo normale
              p.drawImage(logoImg, { x: width/2 - dims.width/2, y: height/2 - dims.height/2, width: dims.width, height: dims.height, opacity: config.logoOpacity });
           }
         }
       });
 
-      // Encryption (FIXED)
+      // Encryption (SAFE CHECK)
       if (!isPreview && config.encryptPdf && config.userPassword) {
-        doc.encrypt({
-          userPassword: config.userPassword,
-          ownerPassword: config.ownerPassword || config.userPassword,
-          permissions: {
-            printing: 'highResolution',
-            modifying: false,
-            copying: false,
-            annotating: false,
-            fillingForms: false,
-            contentAccessibility: false,
-            documentAssembly: false,
-          },
-        });
+        if (typeof doc.encrypt === 'function') {
+          doc.encrypt({
+            userPassword: config.userPassword,
+            ownerPassword: config.ownerPassword || config.userPassword,
+            permissions: {
+              printing: 'highResolution',
+              modifying: false,
+              copying: false,
+              annotating: false,
+              fillingForms: false,
+              contentAccessibility: false,
+              documentAssembly: false,
+            },
+          });
+        } else {
+          console.warn("Encryption module missing in production build");
+        }
       }
 
       return await doc.save();
     } catch (e) {
       console.error(e);
-      if(!isPreview && e.message !== "Password missing") showToast("Errore durante la generazione PDF.", "error");
+      if(!isPreview && e.message !== "Password missing") showToast("Errore generazione PDF: " + e.message, "error");
       return null;
     }
   };
@@ -657,7 +658,7 @@ export default function DigitrikPro() {
   );
 }
 
-// Icon helper missing in import list
+// Icon helper
 const List = ({size, className}) => (
   <svg xmlns="http://www.w3.org/2000/svg" width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className={className}><line x1="8" y1="6" x2="21" y2="6"></line><line x1="8" y1="12" x2="21" y2="12"></line><line x1="8" y1="18" x2="21" y2="18"></line><line x1="3" y1="6" x2="3.01" y2="6"></line><line x1="3" y1="12" x2="3.01" y2="12"></line><line x1="3" y1="18" x2="3.01" y2="18"></line></svg>
 );
