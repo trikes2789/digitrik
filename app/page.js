@@ -6,10 +6,10 @@ import { PDFDocument, rgb, degrees, StandardFonts } from 'pdf-lib';
 import { DragDropContext, Droppable, Draggable } from '@hello-pangea/dnd';
 import { 
   FileText, Plus, Trash2, RefreshCcw, ChevronDown, Wand2, GripVertical, 
-  ImageIcon, Eye, AlignLeft, AlignCenter, AlignRight, ChevronUp, Sparkles 
+  ImageIcon, Eye, AlignLeft, AlignCenter, AlignRight, ChevronUp, Sparkles, X, Check
 } from 'lucide-react';
 
-// --- DATA: FILE ENCYCLOPEDIA (RIPORTATA QUI PER SICUREZZA) ---
+// --- DATA: FILE ENCYCLOPEDIA ---
 const fileEncyclopedia = {
   "AI (Adobe Illustrator)": {
     desc: "Il formato AI è un tipo di file vettoriale proprietario sviluppato da Adobe. A differenza delle immagini composte da pixel, i file AI si basano su percorsi matematici definiti da punti. Questo permette di ridimensionare il contenuto all'infinito senza alcuna perdita di qualità.",
@@ -120,15 +120,11 @@ const fileEncyclopedia = {
 
 // --- COMPONENTI UI OTTIMIZZATI ---
 
-// Slider Intelligente: Aggiorna la UI istantaneamente, ma lancia il calcolo pesante (onChange) solo al rilascio
 const SmartSlider = ({ label, value, min, max, step = 1, unit = "", onChange }) => {
   const [localValue, setLocalValue] = useState(value);
-
   useEffect(() => setLocalValue(value), [value]);
-
   const handleChange = (e) => setLocalValue(e.target.value);
   const handleCommit = () => onChange(localValue);
-
   return (
     <div className="flex flex-col gap-2">
       <div className="flex justify-between text-[11px] font-black uppercase">
@@ -136,12 +132,8 @@ const SmartSlider = ({ label, value, min, max, step = 1, unit = "", onChange }) 
         <span className="text-blue-500">{localValue}{unit}</span>
       </div>
       <input 
-        type="range" 
-        min={min} max={max} step={step}
-        value={localValue} 
-        onChange={handleChange}
-        onMouseUp={handleCommit}   // Desktop: calcola al rilascio
-        onTouchEnd={handleCommit}  // Mobile: calcola al rilascio
+        type="range" min={min} max={max} step={step} value={localValue} 
+        onChange={handleChange} onMouseUp={handleCommit} onTouchEnd={handleCommit} 
         className="w-full h-1 bg-black rounded-lg appearance-none cursor-pointer accent-blue-600" 
       />
     </div>
@@ -167,6 +159,11 @@ export default function DigitrikWorkstation() {
   const [previewUrl, setPreviewUrl] = useState(null);
   const [selectedInfo, setSelectedInfo] = useState(null);
   
+  // Modal State
+  const [showRenameModal, setShowRenameModal] = useState(false);
+  const [tempFilename, setTempFilename] = useState("Digitrik_Result");
+  const [trickCuriosity, setTrickCuriosity] = useState({ key: '', text: '' });
+
   // Layout State
   const [isLayoutOpen, setIsLayoutOpen] = useState(false);
   const [useHeader, setUseHeader] = useState(false);
@@ -219,13 +216,9 @@ export default function DigitrikWorkstation() {
         const img = firstFile.type === 'image/png' ? await previewPdf.embedPng(arrayBuffer) : await previewPdf.embedJpg(arrayBuffer);
         const dims = img.scaleToFit(page.getWidth() - 40, page.getHeight() - 40);
         page.drawImage(img, { x: page.getWidth()/2 - dims.width/2, y: page.getHeight()/2 - dims.height/2, width: dims.width, height: dims.height });
-      } else { 
-        return; // File non supportato per la preview
-      }
+      } else { return; }
 
       const { width, height } = page.getSize();
-
-      // Headers & Footers
       if (useHeader && headerText.trim() !== '') {
         const text = headerText.toUpperCase();
         const tWidth = fontBold.widthOfTextAtSize(text, 9);
@@ -240,8 +233,6 @@ export default function DigitrikWorkstation() {
         const tWidth = fontNormal.widthOfTextAtSize(text, 9);
         page.drawText(text, { x: getXPos(paginationAlign, tWidth, width), y: 30, size: 9, font: fontNormal, color: rgb(0.4, 0.4, 0.4) });
       }
-
-      // Watermarks
       if (watermarkText.trim() !== '') {
         if (useWatermark) {
           const textW = fontBold.widthOfTextAtSize(watermarkText, textSize);
@@ -261,8 +252,6 @@ export default function DigitrikWorkstation() {
           page.drawText(secText, { x: width/2 - (textW/2)*Math.cos(angleRad), y: height/2 - (textW/2)*Math.sin(angleRad), size: textSize * 1.6, font: fontBold, color: rgb(0.5, 0.1, 0.1), opacity: textOpacity, rotate: degrees(60) });
         }
       }
-
-      // Logo Overlay
       if (useLogoWatermark && logoFile) {
         const logoBuf = await logoFile.arrayBuffer();
         const logoImg = logoFile.type === 'image/png' ? await previewPdf.embedPng(logoBuf) : await previewPdf.embedJpg(logoBuf);
@@ -271,7 +260,6 @@ export default function DigitrikWorkstation() {
           for (let y = 30; y < height; y += logoSize * 1.2) page.drawImage(logoImg, { x, y, width: dims.width, height: dims.height, opacity: logoOpacity });
         }
       }
-
       const pdfBytes = await previewPdf.save();
       const blob = new Blob([pdfBytes], { type: 'application/pdf' });
       if (previewUrl) URL.revokeObjectURL(previewUrl);
@@ -279,25 +267,18 @@ export default function DigitrikWorkstation() {
     } catch (e) { console.error("Preview error", e); }
   }, [files, useWatermark, useGridWatermark, useSecurityWatermark, useLogoWatermark, logoFile, watermarkText, logoOpacity, textOpacity, textSize, logoSize, useHeader, headerText, headerAlign, useFooter, footerText, footerAlign, usePagination, paginationAlign]);
 
-  // Debounce per evitare crash durante rendering frequenti
   useEffect(() => {
     const timer = setTimeout(generatePreview, 500);
     return () => clearTimeout(timer);
   }, [generatePreview]);
 
-  // --- DROPZONE HANDLERS (LOGICA FILTRO AGGIORNATA) ---
+  // --- DROPZONE HANDLERS ---
   const onDrop = useCallback(acceptedFiles => {
-    // FILTRO MANUALE: Doppio controllo di sicurezza. 
-    // Alcuni browser/OS lasciano passare file non validi nel drag & drop.
-    // Qui li filtriamo forzatamente.
     const validTypes = ['application/pdf', 'image/png', 'image/jpeg', 'image/jpg'];
-    
     const validFiles = acceptedFiles.filter(file => validTypes.includes(file.type));
-    
     if (validFiles.length < acceptedFiles.length) {
       alert("⚠️ Alcuni file non sono stati caricati.\nIl sistema supporta SOLO: PDF, PNG, JPG.\nFile come XLSX, DOCX o CSV vengono esclusi automaticamente.");
     }
-
     const newFiles = validFiles.map(file => ({
       id: `${file.name}-${Date.now()}-${Math.random()}`,
       file: file
@@ -306,23 +287,12 @@ export default function DigitrikWorkstation() {
   }, []);
 
   const { getRootProps, getInputProps, isDragActive } = useDropzone({ 
-    onDrop,
-    // Definizione MIME standard
-    accept: {
-      'application/pdf': ['.pdf'],
-      'image/png': ['.png'],
-      'image/jpeg': ['.jpg', '.jpeg']
-    }
+    onDrop, accept: { 'application/pdf': ['.pdf'], 'image/png': ['.png'], 'image/jpeg': ['.jpg', '.jpeg'] }
   });
 
-  const onDropLogo = useCallback(acceptedFiles => {
-    if (acceptedFiles.length > 0) setLogoFile(acceptedFiles[0]);
-  }, []);
-
+  const onDropLogo = useCallback(acceptedFiles => { if (acceptedFiles.length > 0) setLogoFile(acceptedFiles[0]); }, []);
   const { getRootProps: getLogoRootProps, getInputProps: getLogoInputProps, isDragActive: isLogoDragActive } = useDropzone({ 
-    onDrop: onDropLogo, 
-    accept: { 'image/*': ['.jpeg', '.jpg', '.png'] }, 
-    multiple: false 
+    onDrop: onDropLogo, accept: { 'image/*': ['.jpeg', '.jpg', '.png'] }, multiple: false 
   });
 
   const onDragEnd = (result) => {
@@ -332,24 +302,24 @@ export default function DigitrikWorkstation() {
     items.splice(result.destination.index, 0, reorderedItem);
     setFiles(items);
   };
-
   const removeFile = (id) => setFiles(prev => prev.filter(f => f.id !== id));
 
-  // --- EXECUTE TRICK (CORE LOGIC) ---
-  const executeTrick = async () => {
+  // --- LOGICA MODALE E TRICK ---
+  const openRenameModal = () => {
     if (files.length === 0) return alert("Coda vuota.");
-
-    // Logica Curiosità
+    
+    // Sceglie curiosità e apre modale
     const keys = Object.keys(fileEncyclopedia);
     const randomKey = keys[Math.floor(Math.random() * keys.length)];
-    const randomCuriosity = fileEncyclopedia[randomKey].curiosity;
-    
-    const promptMessage = `RINOMINA IL TUO FILE\n\nDigita il nome finale qui sotto:\n___________________________________\n\n(💡 Lo sapevi? Per il formato ${randomKey}: ${randomCuriosity})`;
-    const customName = prompt(promptMessage, "Digitrik_Result");
-    
-    if (!customName) return; 
+    setTrickCuriosity({ key: randomKey, text: fileEncyclopedia[randomKey].curiosity });
+    setTempFilename("Digitrik_Result"); // Reset nome
+    setShowRenameModal(true);
+  };
 
+  const confirmTrick = async () => {
+    setShowRenameModal(false); // Chiudi modale
     setIsProcessing(true);
+    
     try {
       const mergedPdf = await PDFDocument.create();
       const fontBold = await mergedPdf.embedFont(StandardFonts.HelveticaBold);
@@ -369,13 +339,11 @@ export default function DigitrikWorkstation() {
             let image = f.file.type === 'image/png' ? await mergedPdf.embedPng(arrayBuffer) : await mergedPdf.embedJpg(arrayBuffer);
             const dims = image.scaleToFit(width - 40, height - 40);
             page.drawImage(image, { x: width / 2 - dims.width / 2, y: height / 2 - dims.height / 2, width: dims.width, height: dims.height });
-          } else {
-             continue;
-          }
+          } else { continue; }
         }
       } else if (action === 'unisci') {
         for (const f of files) {
-          if (f.file.type !== 'application/pdf') continue; // Solo PDF per unione
+          if (f.file.type !== 'application/pdf') continue;
           const pdf = await PDFDocument.load(await f.file.arrayBuffer());
           const pages = await mergedPdf.copyPages(pdf, pdf.getPageIndices());
           pages.forEach(p => mergedPdf.addPage(p));
@@ -405,29 +373,24 @@ export default function DigitrikWorkstation() {
         embeddedLogo = logoFile.type === 'image/png' ? await mergedPdf.embedPng(logoBuffer) : await mergedPdf.embedJpg(logoBuffer);
       }
 
-      // APPLICAZIONE MODIFICHE SU TUTTE LE PAGINE
+      // APPLICAZIONE MODIFICHE
       const pages = mergedPdf.getPages();
       pages.forEach((page, index) => {
         const { width, height } = page.getSize();
-
-        // Header
         if (useHeader && headerText.trim() !== '') {
           const text = headerText.toUpperCase();
           const tWidth = fontBold.widthOfTextAtSize(text, 9);
           page.drawText(text, { x: getXPos(headerAlign, tWidth, width), y: height - 40, size: 9, font: fontBold, color: rgb(0.3, 0.3, 0.3) });
         }
-        // Footer
         if (useFooter && footerText.trim() !== '') {
           const tWidth = fontNormal.widthOfTextAtSize(footerText, 9);
           page.drawText(footerText, { x: getXPos(footerAlign, tWidth, width), y: 30, size: 9, font: fontNormal, color: rgb(0.3, 0.3, 0.3) });
         }
-        // Paginazione
         if (usePagination) {
           const text = `Pag. ${index + 1} / ${pages.length}`;
           const tWidth = fontNormal.widthOfTextAtSize(text, 9);
           page.drawText(text, { x: getXPos(paginationAlign, tWidth, width), y: 30, size: 9, font: fontNormal, color: rgb(0.4, 0.4, 0.4) });
         }
-        // Watermark Testuale
         if (watermarkText.trim() !== '') {
           if (useWatermark) {
             const textW = fontBold.widthOfTextAtSize(watermarkText, textSize);
@@ -447,7 +410,6 @@ export default function DigitrikWorkstation() {
             page.drawText(secText, { x: width/2 - (textW/2)*Math.cos(angleRad), y: height/2 - (textW/2)*Math.sin(angleRad), size: textSize * 1.6, font: fontBold, color: rgb(0.5, 0.1, 0.1), opacity: textOpacity, rotate: degrees(60) });
           }
         }
-        // Watermark Logo
         if (useLogoWatermark && embeddedLogo) {
           const logoDims = embeddedLogo.scaleToFit(logoSize, logoSize); 
           for (let x = 30; x < width; x += logoSize * 1.3) {
@@ -460,15 +422,73 @@ export default function DigitrikWorkstation() {
       const blob = new Blob([finalPdfBytes], { type: 'application/pdf' });
       const url = URL.createObjectURL(blob);
       const link = document.createElement('a');
-      link.href = url; link.download = `${customName}.pdf`; link.click();
+      link.href = url; link.download = `${tempFilename}.pdf`; link.click();
     } catch (e) { alert("Errore nel processo."); } finally { setIsProcessing(false); }
   };
 
   return (
-    <main className="min-h-screen bg-[#080808] text-[#e0e0e0] font-sans">
+    <main className="min-h-screen bg-[#080808] text-[#e0e0e0] font-sans relative">
       <nav className="h-14 border-b border-white/5 flex items-center px-8 bg-[#0a0a0a] sticky top-0 z-50">
         <h1 className="text-xl font-black italic tracking-tighter text-white uppercase">Digitrik <span className="text-blue-600 font-normal">Core</span></h1>
       </nav>
+
+      {/* --- POPUP RINOMINA (CUSTOM MODAL) --- */}
+      {showRenameModal && (
+        <div className="fixed inset-0 z-[100] flex items-center justify-center bg-black/80 backdrop-blur-sm animate-in fade-in duration-200">
+          <div className="bg-[#0a0a0a] border border-blue-600/30 rounded-[2rem] w-[90%] max-w-lg p-8 shadow-[0_0_50px_rgba(37,99,235,0.1)] relative">
+            
+            {/* Titolo e Icona */}
+            <div className="flex items-center gap-3 mb-6">
+              <div className="bg-blue-600/10 p-3 rounded-full text-blue-500">
+                <Wand2 size={24} />
+              </div>
+              <div>
+                <h3 className="text-xl font-black italic text-white uppercase tracking-wider">Finalizza Trick</h3>
+                <p className="text-[11px] text-gray-500 font-bold uppercase">Scegli il nome del tuo file</p>
+              </div>
+              <button onClick={() => setShowRenameModal(false)} className="absolute top-6 right-6 text-gray-600 hover:text-white transition-colors">
+                <X size={20} />
+              </button>
+            </div>
+
+            {/* Input Nome */}
+            <div className="space-y-2 mb-8">
+              <label className="text-xs font-bold text-gray-400 uppercase ml-2">Nome File</label>
+              <div className="relative">
+                <input 
+                  type="text" 
+                  value={tempFilename} 
+                  onChange={(e) => setTempFilename(e.target.value)}
+                  onKeyDown={(e) => e.key === 'Enter' && confirmTrick()}
+                  autoFocus
+                  className="w-full bg-[#111] border border-white/10 rounded-xl p-4 text-white font-medium outline-none focus:border-blue-600 transition-all shadow-inner"
+                />
+                <span className="absolute right-4 top-1/2 -translate-y-1/2 text-gray-600 text-xs font-bold pointer-events-none">.PDF</span>
+              </div>
+            </div>
+
+            {/* Curiosità Box */}
+            <div className="bg-blue-900/10 border border-blue-600/10 rounded-2xl p-5 mb-8 flex gap-4">
+              <Sparkles className="text-blue-500 shrink-0 mt-0.5" size={18} />
+              <div className="space-y-1">
+                <span className="text-[10px] font-black text-blue-400 uppercase tracking-widest block">Lo sapevi? ({trickCuriosity.key})</span>
+                <p className="text-xs text-gray-300 italic leading-relaxed">{trickCuriosity.text}</p>
+              </div>
+            </div>
+
+            {/* Bottoni Azione */}
+            <div className="flex gap-3">
+              <button onClick={() => setShowRenameModal(false)} className="flex-1 py-4 rounded-xl border border-white/5 hover:bg-white/5 text-gray-400 font-bold text-xs uppercase tracking-widest transition-all">
+                Annulla
+              </button>
+              <button onClick={confirmTrick} className="flex-1 py-4 bg-blue-600 hover:bg-blue-500 text-white rounded-xl font-black text-xs uppercase tracking-widest shadow-lg shadow-blue-900/20 transition-all flex items-center justify-center gap-2">
+                <Check size={16} /> Conferma & Scarica
+              </button>
+            </div>
+
+          </div>
+        </div>
+      )}
 
       <div className="grid grid-cols-12">
         <div className="col-span-8 p-8 space-y-6 border-r border-white/5">
@@ -549,7 +569,8 @@ export default function DigitrikWorkstation() {
         </div>
 
         <div className="col-span-4 bg-[#0a0a0a] p-8 space-y-6 relative overflow-y-auto max-h-screen">
-          <button onClick={executeTrick} disabled={isProcessing} className="w-full bg-blue-600 hover:bg-blue-700 disabled:bg-gray-800 text-white py-8 rounded-[2rem] font-black italic uppercase tracking-widest text-xl transition-all flex flex-col items-center justify-center gap-2 shadow-2xl">
+          {/* BOTTONE PRINCIPALE MODIFICATO PER APRIRE MODALE */}
+          <button onClick={openRenameModal} disabled={isProcessing} className="w-full bg-blue-600 hover:bg-blue-700 disabled:bg-gray-800 text-white py-8 rounded-[2rem] font-black italic uppercase tracking-widest text-xl transition-all flex flex-col items-center justify-center gap-2 shadow-2xl">
             {isProcessing ? <RefreshCcw className="animate-spin" size={24} /> : <><Wand2 size={24} /><span>ESEGUI TRICK</span></>}
           </button>
           
@@ -618,18 +639,8 @@ export default function DigitrikWorkstation() {
                 </div>
                 
                 <div className="space-y-4 pt-2 border-t border-white/5">
-                  <SmartSlider 
-                    label="Dimensione Testo" 
-                    value={textSize} 
-                    min={10} max={150} unit="px"
-                    onChange={(val) => setTextSize(parseInt(val))} 
-                  />
-                  <SmartSlider 
-                    label="Opacità Testo" 
-                    value={Math.round(textOpacity * 100)} 
-                    min={5} max={100} step={5} unit="%"
-                    onChange={(val) => setTextOpacity(val / 100)} 
-                  />
+                  <SmartSlider label="Dimensione Testo" value={textSize} min={10} max={150} unit="px" onChange={(val) => setTextSize(parseInt(val))} />
+                  <SmartSlider label="Opacità Testo" value={Math.round(textOpacity * 100)} min={5} max={100} step={5} unit="%" onChange={(val) => setTextOpacity(val / 100)} />
                 </div>
 
                 <div className="pt-4 space-y-4 border-t border-white/5">
@@ -643,18 +654,8 @@ export default function DigitrikWorkstation() {
                     <p className="text-[11px] font-bold text-gray-500 uppercase">{logoFile ? logoFile.name : "Carica Logo"}</p>
                   </div>
                   <div className="space-y-4">
-                     <SmartSlider 
-                      label="Dimensione Logo" 
-                      value={logoSize} 
-                      min={20} max={400} step={5} unit="px"
-                      onChange={(val) => setLogoSize(parseInt(val))} 
-                    />
-                    <SmartSlider 
-                      label="Opacità Logo" 
-                      value={Math.round(logoOpacity * 100)} 
-                      min={5} max={100} step={5} unit="%"
-                      onChange={(val) => setLogoOpacity(val / 100)} 
-                    />
+                     <SmartSlider label="Dimensione Logo" value={logoSize} min={20} max={400} step={5} unit="px" onChange={(val) => setLogoSize(parseInt(val))} />
+                     <SmartSlider label="Opacità Logo" value={Math.round(logoOpacity * 100)} min={5} max={100} step={5} unit="%" onChange={(val) => setLogoOpacity(val / 100)} />
                   </div>
                 </div>
               </div>
