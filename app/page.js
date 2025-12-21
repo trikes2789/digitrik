@@ -49,7 +49,7 @@ const fileEncyclopedia = {
   },
   "HEIC (High Efficiency Image)": {
     desc: "Adottato da Apple per risolvere il problema dello spazio su iPhone, l'HEIC usa una compressione molto avanzata. Permette di mantenere una fedeltà cromatica a 16 bit in file che occupano la metà dello spazio di un JPG. È ideale per la fotografia mobile dove la qualità dei sensori supera i vecchi formati.",
-    curiosity: "HEIC non è solo un'immagine, ma un 'contenitore'. Può memorizzare intere sequenze di foto, motivo per cui viene usato per le 'Live Photos' che si animano quando le tocchi sullo schermo dello smartphone.",
+    curiosity: "HEIC non è solo un'immagine, ma un 'contenitore'. Può memorizzare interere sequenze di foto, motivo per cui viene usato per le 'Live Photos' che si animano quando le tocchi sullo schermo dello smartphone.",
     type: "Immagine Moderna"
   },
   "JPG / JPEG (Joint Photographic)": {
@@ -284,7 +284,15 @@ export default function DigitrikWorkstation() {
 
   const executeTrick = async () => {
     if (files.length === 0) return alert("Coda vuota.");
-    const customName = prompt("Come vuoi battezzare il file finale?", "Digitrik_Result");
+
+    // --- LOGICA CURIOSITÀ CASUALE ---
+    const keys = Object.keys(fileEncyclopedia);
+    const randomKey = keys[Math.floor(Math.random() * keys.length)];
+    const randomCuriosity = fileEncyclopedia[randomKey].curiosity;
+    
+    const promptMessage = `💡 LO SAPEVI? (${randomKey})\n"${randomCuriosity}"\n\n---\nCome vuoi battezzare il file finale?`;
+    const customName = prompt(promptMessage, "Digitrik_Result");
+    
     if (!customName) return; 
 
     setIsProcessing(true);
