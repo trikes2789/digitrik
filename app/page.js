@@ -1,13 +1,13 @@
 'use client';
 
-import React, { useCallback, useState, useEffect, useRef } from 'react';
+import React, { useCallback, useState, useEffect } from 'react';
 import { useDropzone } from 'react-dropzone';
 import { PDFDocument, rgb, degrees, StandardFonts } from 'pdf-lib';
 import { DragDropContext, Droppable, Draggable } from '@hello-pangea/dnd';
 import { 
   FileText, Plus, Trash2, RefreshCcw, ChevronDown, Wand2, GripVertical, 
-  ImageIcon, Eye, AlignLeft, AlignCenter, AlignRight, ChevronUp, Sparkles, X, Check, RotateCw, Tag, 
-  Activity, ShieldAlert, Feather, Layers, Printer, Ghost
+  ImageIcon, Eye, EyeOff, AlignLeft, AlignCenter, AlignRight, ChevronUp, Sparkles, X, Check, RotateCw, Tag, 
+  Activity, ShieldAlert, Feather, Layers, Printer, Ghost, Lock
 } from 'lucide-react';
 
 // --- DATABASE: FILE ENCYCLOPEDIA ---
@@ -77,13 +77,18 @@ export default function DigitrikWorkstation() {
   const [previewUrl, setPreviewUrl] = useState(null);
   const [selectedInfo, setSelectedInfo] = useState(null);
   
-  // Modal State
+  // UI Toggles
+  const [isPreviewOpen, setIsPreviewOpen] = useState(true); // Toggle Anteprima
   const [showRenameModal, setShowRenameModal] = useState(false);
   const [tempFilename, setTempFilename] = useState("Digitrik_Result");
   const [trickCuriosity, setTrickCuriosity] = useState({ key: '', text: '' });
 
-  // Layout State
+  // Menu Toggles (Sidebar Destra)
   const [isLayoutOpen, setIsLayoutOpen] = useState(false);
+  const [isGhostMenuOpen, setIsGhostMenuOpen] = useState(false); // Nuovo menu Ghost
+  const [isMatrixOpen, setIsMatrixOpen] = useState(false);
+
+  // Layout State
   const [useHeader, setUseHeader] = useState(false);
   const [headerText, setHeaderText] = useState('');
   const [headerAlign, setHeaderAlign] = useState('left');
@@ -97,11 +102,10 @@ export default function DigitrikWorkstation() {
   const [rotation, setRotation] = useState(0); 
   const [metaTitle, setMetaTitle] = useState('');
   const [metaAuthor, setMetaAuthor] = useState('');
-  const [ghostMode, setGhostMode] = useState(false); // Clean Metadata
-  const [compressionProfile, setCompressionProfile] = useState('balanced'); // web, balanced, print
+  const [ghostMode, setGhostMode] = useState(false); 
+  const [compressionProfile, setCompressionProfile] = useState('balanced');
 
   // Matrix/Watermark State
-  const [isMatrixOpen, setIsMatrixOpen] = useState(false);
   const [useWatermark, setUseWatermark] = useState(false);
   const [useGridWatermark, setUseGridWatermark] = useState(false);
   const [useSecurityWatermark, setUseSecurityWatermark] = useState(false);
@@ -123,7 +127,6 @@ export default function DigitrikWorkstation() {
     let size = 0;
     let alerts = [];
     
-    // Calcolo Peso
     files.forEach(f => size += f.file.size);
     if (logoFile) size += logoFile.size;
     
@@ -133,18 +136,15 @@ export default function DigitrikWorkstation() {
     if (sizeMB > 50) { status = 'critical'; alerts.push("File molto pesanti: possibile lentezza."); }
     else if (sizeMB > 15) { status = 'warning'; alerts.push("Peso medio-alto."); }
 
-    // Controllo Ink Waste
     if ((useWatermark || useGridWatermark) && textOpacity > 0.5) {
       alerts.push("Spreco inchiostro: Opacità watermark alta.");
     }
     
-    // Controllo Font (Euristico)
     const hasTxt = files.some(f => f.file.type === 'text/plain' || f.file.type === 'text/csv');
     if (hasTxt) alerts.push("File TXT/CSV rilevati: Verranno stampati con font Courier.");
 
     setHealthStats({ weight: `${sizeMB} MB`, status, alerts });
   }, [files, logoFile, textOpacity, useWatermark, useGridWatermark]);
-
 
   const getXPos = (align, textWidth, pageWidth) => {
     if (align === 'center') return (pageWidth / 2) - (textWidth / 2);
@@ -174,6 +174,7 @@ export default function DigitrikWorkstation() {
 
   // --- PREVIEW GENERATOR ---
   const generatePreview = useCallback(async () => {
+    // Generiamo la preview anche se il pannello è chiuso, così è pronta quando l'utente apre
     if (files.length === 0) { setPreviewUrl(null); return; }
     try {
       const firstFile = files[0].file;
@@ -500,11 +501,18 @@ export default function DigitrikWorkstation() {
         {/* --- SIDEBAR --- */}
         <div className="col-span-8 p-8 space-y-6 border-r border-white/5">
           {previewUrl && (
-            <div className="space-y-2 sticky top-20 z-40">
-              <div className="flex justify-between items-center">
-                <div className="flex items-center gap-2 text-blue-500 font-black italic text-[11px] uppercase"><Eye size={14} /> Live Matrix Preview</div>
+            <div className="space-y-2 sticky top-20 z-40 transition-all">
+              {/* HEADER ANTEPRIMA (BUTTON) */}
+              <button 
+                onClick={() => setIsPreviewOpen(!isPreviewOpen)}
+                className="w-full flex justify-between items-center group cursor-pointer"
+              >
+                <div className="flex items-center gap-2 text-blue-500 font-black italic text-[11px] uppercase group-hover:text-blue-400 transition-colors">
+                  {isPreviewOpen ? <Eye size={14} /> : <EyeOff size={14} />} 
+                  Live Matrix Preview {isPreviewOpen ? '' : '(Hidden)'}
+                </div>
                 
-                {/* SYSTEM HEALTH WIDGET */}
+                {/* SYSTEM HEALTH WIDGET (Sempre visibile) */}
                 <div className={`flex items-center gap-3 px-3 py-1 rounded-full border text-[10px] font-bold uppercase tracking-wide transition-all ${
                   healthStats.status === 'optimal' ? 'bg-green-500/10 border-green-500/30 text-green-500' :
                   healthStats.status === 'warning' ? 'bg-yellow-500/10 border-yellow-500/30 text-yellow-500' :
@@ -513,20 +521,23 @@ export default function DigitrikWorkstation() {
                   <Activity size={12} /> 
                   System Weight: {healthStats.weight}
                 </div>
-              </div>
+              </button>
 
               {/* HEALTH ALERTS */}
-              {healthStats.alerts.length > 0 && (
+              {healthStats.alerts.length > 0 && isPreviewOpen && (
                 <div className="bg-[#111] border border-yellow-500/20 rounded-xl p-3 space-y-1 animate-in fade-in slide-in-from-top-2">
                    {healthStats.alerts.map((alert, i) => (
-                     <div key={i} className="flex items-center gap-2 text-[10px] text-yellow-500/80 font-bold uppercase"><Shieldalert size={10} /> {alert}</div>
+                     <div key={i} className="flex items-center gap-2 text-[10px] text-yellow-500/80 font-bold uppercase"><ShieldAlert size={10} /> {alert}</div>
                    ))}
                 </div>
               )}
 
-              <div className="w-full h-80 bg-[#111] rounded-[2rem] border border-blue-600/20 overflow-hidden shadow-2xl relative">
-                <iframe src={`${previewUrl}#toolbar=0&navpanes=0`} className="w-full h-full border-none opacity-80" />
-              </div>
+              {/* IFRAME ANTEPRIMA (COLLASSABILE) */}
+              {isPreviewOpen && (
+                <div className="w-full h-80 bg-[#111] rounded-[2rem] border border-blue-600/20 overflow-hidden shadow-2xl relative animate-in fade-in zoom-in duration-300">
+                  <iframe src={`${previewUrl}#toolbar=0&navpanes=0`} className="w-full h-full border-none opacity-80" />
+                </div>
+              )}
             </div>
           )}
           
@@ -597,7 +608,7 @@ export default function DigitrikWorkstation() {
           </div>
         </div>
 
-        {/* --- CONTROLS BAR --- */}
+        {/* --- CONTROLS BAR (RIGHT SIDEBAR) --- */}
         <div className="col-span-4 bg-[#0a0a0a] p-8 space-y-6 relative overflow-y-auto max-h-screen">
           <button onClick={openRenameModal} disabled={isProcessing} className="w-full bg-blue-600 hover:bg-blue-700 disabled:bg-gray-800 text-white py-8 rounded-[2rem] font-black italic uppercase tracking-widest text-xl transition-all flex flex-col items-center justify-center gap-2 shadow-2xl">
             {isProcessing ? <RefreshCcw className="animate-spin" size={24} /> : <><Wand2 size={24} /><span>ESEGUI TRICK</span></>}
@@ -612,7 +623,7 @@ export default function DigitrikWorkstation() {
             <ChevronDown className="absolute right-5 top-1/2 -translate-y-1/2 text-gray-500 pointer-events-none" size={18} />
           </div>
 
-          {/* LAYOUT TOOLS */}
+          {/* MENU 1: LAYOUT TOOLS */}
           <div className="bg-[#111] rounded-2xl border border-white/5 overflow-hidden">
             <button onClick={() => setIsLayoutOpen(!isLayoutOpen)} className="w-full p-5 flex items-center justify-between text-xs font-black uppercase text-gray-400 hover:text-white transition-colors italic">
               <span>Layout & Export</span> {isLayoutOpen ? <ChevronUp size={16} /> : <ChevronDown size={16} />}
@@ -644,27 +655,6 @@ export default function DigitrikWorkstation() {
                     ))}
                   </div>
                 </div>
-
-                {/* GHOST CLEAN */}
-                <label className={`flex items-center justify-between p-3 rounded-xl border cursor-pointer transition-all ${ghostMode ? 'bg-red-900/10 border-red-500/30' : 'bg-black border-white/5'}`}>
-                   <div className="flex items-center gap-2">
-                     <Ghost size={14} className={ghostMode ? 'text-red-500' : 'text-gray-500'} />
-                     <div>
-                       <span className={`block text-[10px] font-black uppercase ${ghostMode ? 'text-red-500' : 'text-gray-400'}`}>Ghost Mode</span>
-                       <span className="text-[9px] text-gray-600 block">Sanitizza Metadati</span>
-                     </div>
-                   </div>
-                   <input type="checkbox" checked={ghostMode} onChange={e => setGhostMode(e.target.checked)} className="accent-red-500" />
-                </label>
-
-                {/* METADATA (Hidden if Ghost Mode is ON) */}
-                {!ghostMode && (
-                  <div className="space-y-3 pb-3 border-b border-white/5 opacity-100 transition-opacity">
-                    <div className="flex items-center gap-2 text-[10px] font-black uppercase text-blue-500 mb-2"><Tag size={12}/> Metadati Stealth</div>
-                    <input type="text" placeholder="Titolo Documento..." value={metaTitle} onChange={e => setMetaTitle(e.target.value)} className="w-full bg-black border border-white/5 rounded-xl p-3 text-xs text-white outline-none focus:border-blue-600/50" />
-                    <input type="text" placeholder="Autore..." value={metaAuthor} onChange={e => setMetaAuthor(e.target.value)} className="w-full bg-black border border-white/5 rounded-xl p-3 text-xs text-white outline-none focus:border-blue-600/50" />
-                  </div>
-                )}
 
                 <div className="flex justify-between items-center bg-black p-3 rounded-xl border border-white/5">
                   <span className="text-[11px] font-bold text-gray-400 uppercase flex items-center gap-2"><RotateCw size={14} /> Rotazione</span>
@@ -706,7 +696,45 @@ export default function DigitrikWorkstation() {
             )}
           </div>
 
-          {/* PROTEZIONE MATRIX */}
+          {/* MENU 2: GHOST SECURITY PROTOCOLS (NEW) */}
+          <div className="bg-[#111] rounded-2xl border border-white/5 overflow-hidden">
+            <button onClick={() => setIsGhostMenuOpen(!isGhostMenuOpen)} className="w-full p-5 flex items-center justify-between text-xs font-black uppercase text-gray-400 hover:text-white transition-colors italic">
+              <span>Ghost Security Protocols</span> {isGhostMenuOpen ? <ChevronUp size={16} /> : <ChevronDown size={16} />}
+            </button>
+            {isGhostMenuOpen && (
+              <div className="p-5 pt-0 space-y-5 border-t border-white/5 mt-2 animate-in fade-in slide-in-from-top-1">
+                
+                {/* GHOST CLEAN */}
+                <label className={`flex items-center justify-between p-3 rounded-xl border cursor-pointer transition-all ${ghostMode ? 'bg-red-900/10 border-red-500/30' : 'bg-black border-white/5'}`}>
+                   <div className="flex items-center gap-2">
+                     <Ghost size={14} className={ghostMode ? 'text-red-500' : 'text-gray-500'} />
+                     <div>
+                       <span className={`block text-[10px] font-black uppercase ${ghostMode ? 'text-red-500' : 'text-gray-400'}`}>Ghost Mode</span>
+                       <span className="text-[9px] text-gray-600 block">Sanitizza tutti i Metadati</span>
+                     </div>
+                   </div>
+                   <input type="checkbox" checked={ghostMode} onChange={e => setGhostMode(e.target.checked)} className="accent-red-500" />
+                </label>
+
+                {/* METADATA (Hidden if Ghost Mode is ON) */}
+                {!ghostMode && (
+                  <div className="space-y-3 opacity-100 transition-opacity">
+                    <div className="flex items-center gap-2 text-[10px] font-black uppercase text-blue-500 mb-2"><Tag size={12}/> Metadati Stealth</div>
+                    <input type="text" placeholder="Titolo Documento..." value={metaTitle} onChange={e => setMetaTitle(e.target.value)} className="w-full bg-black border border-white/5 rounded-xl p-3 text-xs text-white outline-none focus:border-blue-600/50" />
+                    <input type="text" placeholder="Autore..." value={metaAuthor} onChange={e => setMetaAuthor(e.target.value)} className="w-full bg-black border border-white/5 rounded-xl p-3 text-xs text-white outline-none focus:border-blue-600/50" />
+                  </div>
+                )}
+                
+                {ghostMode && (
+                   <div className="p-3 bg-red-900/10 border border-red-500/20 rounded-xl">
+                      <p className="text-[10px] text-red-400 italic flex gap-2 items-center"><Lock size={12}/> Attenzione: Tutti i metadati originali verranno distrutti.</p>
+                   </div>
+                )}
+              </div>
+            )}
+          </div>
+
+          {/* MENU 3: PROTEZIONE MATRIX */}
           <div className="bg-[#111] rounded-2xl border border-white/5 overflow-hidden">
             <button onClick={() => setIsMatrixOpen(!isMatrixOpen)} className="w-full p-5 flex items-center justify-between text-xs font-black uppercase text-gray-400 hover:text-white transition-colors italic">
               <span>Protezione Matrix</span> {isMatrixOpen ? <ChevronUp size={16} /> : <ChevronDown size={16} />}
