@@ -1,9 +1,8 @@
 'use client';
 
-import React, { useCallback, useState, useEffect, useRef } from 'react';
+import React, { useCallback, useState, useEffect } from 'react';
 import { useDropzone } from 'react-dropzone';
-// FIX IMPORT: Importiamo l'intero modulo per evitare che Turbopack rimuova .encrypt()
-import * as PDFLib from 'pdf-lib';
+// NOTA: Abbiamo rimosso l'import statico di pdf-lib per usare quello dinamico
 import { DragDropContext, Droppable, Draggable } from '@hello-pangea/dnd';
 import { 
   FileText, Plus, Trash2, RefreshCcw, Wand2, GripVertical, 
@@ -97,7 +96,6 @@ const Toast = ({ message, type, onClose }) => (
 
 // --- MAIN APP ---
 export default function DigitrikPro() {
-  // CORE STATE
   const [files, setFiles] = useState([]);
   const [activeTab, setActiveTab] = useState('files'); 
   const [previewUrl, setPreviewUrl] = useState(null);
@@ -111,21 +109,16 @@ export default function DigitrikPro() {
     useFooter: false, footerText: '', footerAlign: 'center',
     usePagination: false, paginationAlign: 'right',
     rotation: 0,
-    // Matrix / Watermark
+    // Matrix
     watermarkText: '', textOpacity: 0.25, textSize: 30,
-    useWatermark: false, // Nastro
-    useGrid: false,      // Griglia
-    useSecurity: false,  // Security
+    useWatermark: false, useGrid: false, useSecurity: false,
     // Logo
     useLogo: false, logoFile: null, logoOpacity: 0.15, logoSize: 150,
-    // Security & Ghost
-    ghostMode: false,
-    metaTitle: '', metaAuthor: '',
+    // Security
+    ghostMode: false, metaTitle: '', metaAuthor: '',
     encryptPdf: false, userPassword: '', ownerPassword: '',
     // Performance
-    compression: 'balanced', 
-    action: 'conversione', 
-    extractRange: ''
+    compression: 'balanced', action: 'conversione', extractRange: ''
   });
 
   // HEALTH MONITOR
@@ -136,16 +129,10 @@ export default function DigitrikPro() {
     files.forEach(f => size += f.file.size);
     if (config.logoFile) size += config.logoFile.size;
     const mb = size / (1024 * 1024);
-    
     let score = 100;
     if (mb > 20) score -= 20;
     if ((config.useWatermark || config.useGrid) && config.textOpacity > 0.5) score -= 10;
-    
-    setHealth({
-      size: mb.toFixed(2),
-      status: score > 80 ? 'ok' : score > 50 ? 'warn' : 'crit',
-      score
-    });
+    setHealth({ size: mb.toFixed(2), status: score > 80 ? 'ok' : score > 50 ? 'warn' : 'crit', score });
   }, [files, config]);
 
   const showToast = (msg, type = 'success') => {
@@ -157,7 +144,6 @@ export default function DigitrikPro() {
   const onDrop = useCallback(accepted => {
     const valid = accepted.filter(f => ['application/pdf', 'image/png', 'image/jpeg', 'image/jpg', 'text/plain', 'text/csv'].includes(f.type) || f.name.endsWith('.csv'));
     if (valid.length < accepted.length) showToast("File non supportati ignorati.", "error");
-    
     setFiles(prev => [...prev, ...valid.map(f => ({ id: Math.random().toString(36), file: f }))]);
     if (valid.length > 0) showToast(`${valid.length} file aggiunti.`);
   }, []);
@@ -172,7 +158,7 @@ export default function DigitrikPro() {
   }, []);
   const { getRootProps: getLogoProps, getInputProps: getLogoInput } = useDropzone({ onDrop: onLogoDrop, accept: {'image/*': []}, multiple: false });
 
-  // --- LOGIC: PDF ENGINE (FIXED ENCRYPTION) ---
+  // --- LOGIC: PDF ENGINE (DYNAMIC IMPORT FIX) ---
   const generatePdf = async (isPreview = false) => {
     if (files.length === 0) return null;
     
@@ -182,8 +168,10 @@ export default function DigitrikPro() {
     }
 
     try {
-      // FIX: Use PDFLib object from full import
-      const doc = await PDFLib.PDFDocument.create();
+      // IMPORT DINAMICO: Carica la libreria intera solo quando serve per evitare che Turbopack rompa la crittografia
+      const { PDFDocument, StandardFonts, rgb, degrees } = await import('pdf-lib');
+
+      const doc = await PDFDocument.create();
       
       // Metadata
       if (!isPreview) {
@@ -197,11 +185,11 @@ export default function DigitrikPro() {
         }
       }
 
-      const fontBold = await doc.embedFont(PDFLib.StandardFonts.HelveticaBold);
-      const fontNormal = await doc.embedFont(PDFLib.StandardFonts.Helvetica);
-      const fontMono = await doc.embedFont(PDFLib.StandardFonts.Courier);
+      const fontBold = await doc.embedFont(StandardFonts.HelveticaBold);
+      const fontNormal = await doc.embedFont(StandardFonts.Helvetica);
+      const fontMono = await doc.embedFont(StandardFonts.Courier);
 
-      // Processing Files
+      // Processing
       for (const f of files) {
         let buffer;
         if (f.file.type.startsWith('image/') && !isPreview) {
@@ -213,7 +201,7 @@ export default function DigitrikPro() {
         }
 
         if (f.file.type === 'application/pdf') {
-          const srcDoc = await PDFLib.PDFDocument.load(buffer);
+          const srcDoc = await PDFDocument.load(buffer);
           let indices = srcDoc.getPageIndices();
           if (config.action === 'estrai' && config.extractRange) {
              const parts = config.extractRange.split(',');
@@ -237,7 +225,18 @@ export default function DigitrikPro() {
         } else if (f.file.type.includes('text')) {
           const txt = await f.file.text();
           const page = doc.addPage();
-          page.drawText(txt.substring(0, 3000), { x: 50, y: 800, size: 10, font: fontMono, maxWidth: 500, lineHeight: 12 });
+          // Semplice text rendering per testo puro
+          const fontSize = 10;
+          const lineHeight = 12;
+          const lines = txt.split(/\r\n|\r|\n/);
+          let y = 800;
+          let x = 50;
+          
+          // Disegna solo le prime righe che ci stanno per evitare loop infiniti in preview
+          for (let i = 0; i < Math.min(lines.length, 60); i++) {
+             page.drawText(lines[i].replace(/[^\x00-\x7F]/g, "?"), { x, y, size: fontSize, font: fontMono, color: rgb(0,0,0) });
+             y -= lineHeight;
+          }
         }
       }
 
@@ -252,70 +251,60 @@ export default function DigitrikPro() {
       const pages = doc.getPages();
       pages.forEach((p, idx) => {
         const { width, height } = p.getSize();
-        if (config.rotation) p.setRotation(PDFLib.degrees(config.rotation));
+        if (config.rotation) p.setRotation(degrees(config.rotation));
 
-        // Header/Footer
-        if (config.useHeader) p.drawText(config.headerText.toUpperCase(), { x: 40, y: height - 30, size: 9, font: fontBold, color: PDFLib.rgb(0.2,0.2,0.2) });
-        if (config.useFooter) p.drawText(config.footerText, { x: width/2 - 20, y: 30, size: 9, font: fontNormal, color: PDFLib.rgb(0.2,0.2,0.2) });
+        if (config.useHeader) p.drawText(config.headerText.toUpperCase(), { x: 40, y: height - 30, size: 9, font: fontBold, color: rgb(0.2,0.2,0.2) });
+        if (config.useFooter) p.drawText(config.footerText, { x: width/2 - 20, y: 30, size: 9, font: fontNormal, color: rgb(0.2,0.2,0.2) });
         if (config.usePagination) p.drawText(`${idx+1} / ${pages.length}`, { x: width - 60, y: 30, size: 9, font: fontNormal });
 
-        // --- WATERMARK LOGIC ---
         if (config.watermarkText) {
           const textW = fontBold.widthOfTextAtSize(config.watermarkText, config.textSize);
-          
           if (config.useWatermark) {
              for (let x = -width; x < width * 2; x += (textW / 2) + 100) {
                for (let y = -height; y < height * 2; y += 150) {
-                 p.drawText(config.watermarkText, { x, y, size: config.textSize, font: fontBold, opacity: config.textOpacity, rotate: PDFLib.degrees(45), color: PDFLib.rgb(0.5,0.5,0.5) });
+                 p.drawText(config.watermarkText, { x, y, size: config.textSize, font: fontBold, opacity: config.textOpacity, rotate: degrees(45), color: rgb(0.5,0.5,0.5) });
                }
              }
           }
           if (config.useGrid) {
              for (let x = 30; x < width; x += 150) {
                for (let y = 30; y < height; y += 100) {
-                 p.drawText(config.watermarkText.substring(0, 15), { x, y, size: config.textSize * 0.6, font: fontBold, opacity: config.textOpacity, color: PDFLib.rgb(0.4,0.4,0.4) });
+                 p.drawText(config.watermarkText.substring(0, 15), { x, y, size: config.textSize * 0.6, font: fontBold, opacity: config.textOpacity, color: rgb(0.4,0.4,0.4) });
                }
              }
           }
           if (config.useSecurity) {
-             p.drawText(config.watermarkText, { x: width/2 - 50, y: height/2, size: config.textSize * 1.5, font: fontBold, opacity: config.textOpacity, rotate: PDFLib.degrees(45), color: PDFLib.rgb(0.8,0.2,0.2) });
+             p.drawText(config.watermarkText, { x: width/2 - 50, y: height/2, size: config.textSize * 1.5, font: fontBold, opacity: config.textOpacity, rotate: degrees(45), color: rgb(0.8,0.2,0.2) });
           }
         }
 
-        // Logo Logic
-        if (logoImg) {
+        if (logoImg && config.useLogo) {
           const dims = logoImg.scaleToFit(config.logoSize, config.logoSize);
-          if (config.useLogo) {
-             p.drawImage(logoImg, { x: width/2 - dims.width/2, y: height/2 - dims.height/2, width: dims.width, height: dims.height, opacity: config.logoOpacity });
-          }
+          p.drawImage(logoImg, { x: width/2 - dims.width/2, y: height/2 - dims.height/2, width: dims.width, height: dims.height, opacity: config.logoOpacity });
         }
       });
 
-      // Encryption (SAFE CHECK)
+      // ENCRYPTION - Ora chiamiamo direttamente .encrypt() perché l'import dinamico garantisce che la funzione esista
       if (!isPreview && config.encryptPdf && config.userPassword) {
-        if (typeof doc.encrypt === 'function') {
-          doc.encrypt({
-            userPassword: config.userPassword,
-            ownerPassword: config.ownerPassword || config.userPassword,
-            permissions: {
-              printing: 'highResolution',
-              modifying: false,
-              copying: false,
-              annotating: false,
-              fillingForms: false,
-              contentAccessibility: false,
-              documentAssembly: false,
-            },
-          });
-        } else {
-          console.warn("Encryption module missing in production build");
-        }
+        doc.encrypt({
+          userPassword: config.userPassword,
+          ownerPassword: config.ownerPassword || config.userPassword,
+          permissions: {
+            printing: 'highResolution',
+            modifying: false,
+            copying: false,
+            annotating: false,
+            fillingForms: false,
+            contentAccessibility: false,
+            documentAssembly: false,
+          },
+        });
       }
 
       return await doc.save();
     } catch (e) {
       console.error(e);
-      if(!isPreview && e.message !== "Password missing") showToast("Errore generazione PDF: " + e.message, "error");
+      if(!isPreview && e.message !== "Password missing") showToast("Errore: " + e.message, "error");
       return null;
     }
   };
@@ -558,7 +547,6 @@ export default function DigitrikPro() {
               <div className="p-4 bg-zinc-900 rounded-xl border border-zinc-800 space-y-4">
                 <input type="text" placeholder="Testo filigrana (es. BOZZA)" value={config.watermarkText} onChange={e => setConfig({...config, watermarkText: e.target.value})} className="w-full bg-zinc-950 border border-zinc-800 rounded-lg p-3 text-xs font-bold text-white outline-none focus:border-blue-500" />
                 
-                {/* RESTORED MATRIX TOGGLES */}
                 <div className="space-y-2">
                   <Toggle label="Nastro (Diagonale)" checked={config.useWatermark} onChange={v => setConfig({...config, useWatermark: v})} icon={Sparkles} />
                   <Toggle label="Griglia Fitta" checked={config.useGrid} onChange={v => setConfig({...config, useGrid: v})} icon={Grid3X3} />
