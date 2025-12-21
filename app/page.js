@@ -9,8 +9,114 @@ import {
   ImageIcon, Eye, AlignLeft, AlignCenter, AlignRight, ChevronUp, Sparkles 
 } from 'lucide-react';
 
-// Assicurati di aver creato il file data.js nella stessa cartella!
-import { fileEncyclopedia } from './data';
+// --- DATA: FILE ENCYCLOPEDIA (RIPORTATA QUI PER SICUREZZA) ---
+const fileEncyclopedia = {
+  "AI (Adobe Illustrator)": {
+    desc: "Il formato AI è un tipo di file vettoriale proprietario sviluppato da Adobe. A differenza delle immagini composte da pixel, i file AI si basano su percorsi matematici definiti da punti. Questo permette di ridimensionare il contenuto all'infinito senza alcuna perdita di qualità.",
+    curiosity: "Sapevi che internamente un file AI è basato su una versione semplificata del formato PDF? Spesso puoi visualizzarne l'anteprima rinominandolo in .pdf.",
+    type: "Immagine Vettoriale"
+  },
+  "BMP (Bitmap Image)": {
+    desc: "Il Bitmap (BMP) è uno dei formati grafici più puri e datati. Memorizza i dati dei pixel in modo diretto e non compresso, garantendo fedeltà assoluta ma generando file enormi.",
+    curiosity: "Negli anni '90, una sola immagine BMP ad alta risoluzione poteva occupare più spazio di un intero pacchetto software a causa della totale assenza di compressione.",
+    type: "Immagine Raster"
+  },
+  "CSV (Comma Separated Values)": {
+    desc: "Il CSV è il ponte universale dei dati. Si tratta di un file di puro testo dove ogni riga rappresenta un record e i dati sono separati da una virgola.",
+    curiosity: "Nonostante sembri moderno, le sue origini risalgono al 1972, ben prima della nascita dei PC IBM.",
+    type: "Documento Dati"
+  },
+  "DOC / DOCX (Microsoft Word)": {
+    desc: "Il DOCX è l'evoluzione del formato DOC. La 'X' sta per XML, indicando che il file è un archivio compresso di file testuali e grafici strutturati.",
+    curiosity: "Se rinomini un .docx in .zip, puoi aprirlo come una cartella e vedere le immagini contenute al suo interno.",
+    type: "Documento di Testo"
+  },
+  "EPS (Encapsulated PostScript)": {
+    desc: "L'EPS è il pilastro della stampa professionale. Contiene istruzioni matematiche per descrivere immagini e testi con precisione millimetrica.",
+    curiosity: "Anche se vettoriale, un file EPS può contenere un'anteprima in bassa risoluzione per i vecchi computer.",
+    type: "Vettoriale Professionale"
+  },
+  "EPUB (Electronic Publication)": {
+    desc: "Standard aperto per gli eBook. Il testo si adatta automaticamente allo schermo (layout refluibile).",
+    curiosity: "Un file EPUB è tecnicamente un piccolo sito web compresso (HTML + CSS).",
+    type: "Libro Digitale"
+  },
+  "GIF (Graphics Interchange Format)": {
+    desc: "Famoso per le animazioni in loop. Supporta solo 256 colori e trasparenza binaria.",
+    curiosity: "L'inventore dice che si pronuncia 'Jif', scatenando una guerra linguistica di 30 anni.",
+    type: "Immagine Animata"
+  },
+  "HEIC (High Efficiency Image)": {
+    desc: "Formato Apple ad alta efficienza. Qualità superiore al JPG in metà dello spazio.",
+    curiosity: "HEIC è un 'contenitore': può memorizzare sequenze di foto (come le Live Photos).",
+    type: "Immagine Moderna"
+  },
+  "JPG / JPEG (Joint Photographic)": {
+    desc: "Il formato fotografico più usato. Usa compressione 'lossy' (con perdita) per ridurre il peso.",
+    curiosity: "Ogni salvataggio degrada la qualità: un fenomeno noto come 'digital rot'.",
+    type: "Immagine Standard"
+  },
+  "ODT (OpenDocument Text)": {
+    desc: "Alternativa open-source ai formati proprietari. Standard ISO per la pubblica amministrazione.",
+    curiosity: "Obbligatorio in molti governi per evitare la dipendenza da licenze software private.",
+    type: "Documento Libero"
+  },
+  "PDF (Portable Document Format)": {
+    desc: "Standard mondiale per documenti che devono apparire identici su ogni dispositivo.",
+    curiosity: "Divenne standard globale solo quando Adobe decise di rendere Acrobat Reader gratuito.",
+    type: "Documento Universale"
+  },
+  "PNG (Portable Network Graphics)": {
+    desc: "Compressione senza perdita e supporto alla trasparenza alfa (sfumata).",
+    curiosity: "Creato d'urgenza nel 1995 per sostituire il GIF che aveva problemi di brevetto.",
+    type: "Immagine Trasparente"
+  },
+  "PPT / PPTX (PowerPoint)": {
+    desc: "Standard per presentazioni. Organizza slide, animazioni e grafici in struttura XML.",
+    curiosity: "Microsoft comprò il software originale per soli 14 milioni di dollari nel 1987.",
+    type: "Presentazione"
+  },
+  "PSD (Adobe Photoshop)": {
+    desc: "File di lavoro a livelli (layers). Supporta maschere e canali avanzati.",
+    curiosity: "Un file PSD può superare i 2 Gigabyte. Oltre quella soglia si usa il formato PSB.",
+    type: "Progetto Grafico"
+  },
+  "RAW (Digital Negative)": {
+    desc: "Negativo digitale. Dati grezzi del sensore non elaborati.",
+    curiosity: "Puoi cambiare il bilanciamento del bianco dopo lo scatto senza perdere qualità.",
+    type: "Dati Sensore"
+  },
+  "RTF (Rich Text Format)": {
+    desc: "Formato di testo formattato universale e sicuro, leggibile da quasi tutto.",
+    curiosity: "Non può contenere virus macro, rendendolo molto sicuro.",
+    type: "Testo Formattato"
+  },
+  "SVG (Scalable Vector Graphics)": {
+    desc: "Vettoriale per il web scritto in codice XML. Scalabile all'infinito.",
+    curiosity: "Puoi aprire un SVG col Blocco Note e cambiare i colori modificando il testo.",
+    type: "Immagine Web Vettoriale"
+  },
+  "TIFF (Tagged Image File)": {
+    desc: "Standard per stampa e archiviazione museale. Altissima qualità.",
+    curiosity: "Può contenere più pagine in un file solo (usato nei vecchi fax digitali).",
+    type: "Archiviazione Qualità"
+  },
+  "TXT (Plain Text)": {
+    desc: "Puro testo senza formattazione. La base dell'informatica.",
+    curiosity: "Tutto il codice di internet nasce come file .txt prima di essere compilato.",
+    type: "Testo Puro"
+  },
+  "WEBP (Google Web Picture)": {
+    desc: "Formato web moderno di Google. Più leggero di JPG e PNG.",
+    curiosity: "Si basa sulla tecnologia di compressione video dei file VP8.",
+    type: "Immagine Web"
+  },
+  "XLS / XLSX (Microsoft Excel)": {
+    desc: "Il re dei fogli di calcolo. Gestisce milioni di righe e calcoli complessi.",
+    curiosity: "Il limite di righe è passato da 65.536 a oltre 1 milione con il formato XLSX.",
+    type: "Foglio di Calcolo"
+  }
+};
 
 // --- COMPONENTI UI OTTIMIZZATI ---
 
@@ -179,9 +285,20 @@ export default function DigitrikWorkstation() {
     return () => clearTimeout(timer);
   }, [generatePreview]);
 
-  // --- DROPZONE HANDLERS ---
+  // --- DROPZONE HANDLERS (LOGICA FILTRO AGGIORNATA) ---
   const onDrop = useCallback(acceptedFiles => {
-    const newFiles = acceptedFiles.map(file => ({
+    // FILTRO MANUALE: Doppio controllo di sicurezza. 
+    // Alcuni browser/OS lasciano passare file non validi nel drag & drop.
+    // Qui li filtriamo forzatamente.
+    const validTypes = ['application/pdf', 'image/png', 'image/jpeg', 'image/jpg'];
+    
+    const validFiles = acceptedFiles.filter(file => validTypes.includes(file.type));
+    
+    if (validFiles.length < acceptedFiles.length) {
+      alert("⚠️ Alcuni file non sono stati caricati.\nIl sistema supporta SOLO: PDF, PNG, JPG.\nFile come XLSX, DOCX o CSV vengono esclusi automaticamente.");
+    }
+
+    const newFiles = validFiles.map(file => ({
       id: `${file.name}-${Date.now()}-${Math.random()}`,
       file: file
     }));
@@ -190,12 +307,12 @@ export default function DigitrikWorkstation() {
 
   const { getRootProps, getInputProps, isDragActive } = useDropzone({ 
     onDrop,
+    // Definizione MIME standard
     accept: {
       'application/pdf': ['.pdf'],
       'image/png': ['.png'],
       'image/jpeg': ['.jpg', '.jpeg']
-    },
-    onDropRejected: () => alert("⚠️ Formato non supportato. Puoi processare solo PDF, JPG e PNG.")
+    }
   });
 
   const onDropLogo = useCallback(acceptedFiles => {
@@ -222,7 +339,7 @@ export default function DigitrikWorkstation() {
   const executeTrick = async () => {
     if (files.length === 0) return alert("Coda vuota.");
 
-    // Logica Curiosità ottimizzata con import esterno
+    // Logica Curiosità
     const keys = Object.keys(fileEncyclopedia);
     const randomKey = keys[Math.floor(Math.random() * keys.length)];
     const randomCuriosity = fileEncyclopedia[randomKey].curiosity;
@@ -253,7 +370,6 @@ export default function DigitrikWorkstation() {
             const dims = image.scaleToFit(width - 40, height - 40);
             page.drawImage(image, { x: width / 2 - dims.width / 2, y: height / 2 - dims.height / 2, width: dims.width, height: dims.height });
           } else {
-             // Skip file non supportati senza rompere il loop
              continue;
           }
         }
