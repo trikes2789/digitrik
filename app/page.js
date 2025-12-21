@@ -10,7 +10,7 @@ import {
   ChevronRight, Sparkles 
 } from 'lucide-react';
 
-// --- DATABASE ENCICLOPEDIA COMPLETO ---
+// --- DATABASE ENCICLOPEDIA ---
 const fileEncyclopedia = {
   "AI (Adobe Illustrator)": {
     desc: "Il formato AI è un tipo di file vettoriale proprietario sviluppato da Adobe. A differenza delle immagini composte da pixel, i file AI si basano su percorsi matematici definiti da punti. Questo permette di ridimensionare il contenuto all'infinito senza alcuna perdita di qualità, rendendolo lo standard per la creazione di loghi professionali che devono essere stampati su superfici di ogni dimensione.",
@@ -49,7 +49,7 @@ const fileEncyclopedia = {
   },
   "HEIC (High Efficiency Image)": {
     desc: "Adottato da Apple per risolvere il problema dello spazio su iPhone, l'HEIC usa una compressione molto avanzata. Permette di mantenere una fedeltà cromatica a 16 bit in file che occupano la metà dello spazio di un JPG. È ideale per la fotografia mobile dove la qualità dei sensori supera i vecchi formati.",
-    curiosity: "HEIC non è solo un'immagine, ma un 'contenitore'. Può memorizzare interere sequenze di foto, motivo per cui viene usato per le 'Live Photos' che si animano quando le tocchi sullo schermo dello smartphone.",
+    curiosity: "HEIC non è solo un'immagine, ma un 'contenitore'. Può memorizzare intere sequenze di foto, motivo per cui viene usato per le 'Live Photos' che si animano quando le tocchi sullo schermo dello smartphone.",
     type: "Immagine Moderna"
   },
   "JPG / JPEG (Joint Photographic)": {
@@ -108,7 +108,7 @@ const fileEncyclopedia = {
     type: "Testo Puro"
   },
   "WEBP (Google Web Picture)": {
-    desc: "Sviluppato da Google, il WebP è il formato definitivo per la velocità dei siti web. Combina il meglio di JPG e PNG, ma con file che sono mediamente il 30% più leggeri. Supporta trasparenza e animazioni, puntando a sostituire tutti i vecchi formati grafici della rete.",
+    desc: "Sviluppato da Google, il WebP è il formato definitivo per la velocità dei siti web. Combina il meglio di JPG e PNG, mas con file che sono mediamente il 30% più leggeri. Supporta trasparenza e animazioni, puntando a sostituire tutti i vecchi formati grafici della rete.",
     curiosity: "Anche se sembra un formato nuovo, WebP si basa sulla tecnologia di compressione video VP8. In pratica, un'immagine WebP è come un singolo fotogramma di un video ad alta definizione ottimizzato.",
     type: "Immagine Web"
   },
@@ -124,61 +124,42 @@ export default function DigitrikWorkstation() {
   const [action, setAction] = useState('conversione'); 
   const [isProcessing, setIsProcessing] = useState(false);
   const [previewUrl, setPreviewUrl] = useState(null);
-
-  // --- STATO ENCICLOPEDIA ---
   const [selectedInfo, setSelectedInfo] = useState(null);
-
-  // --- STATI PER MENU A SCOMPARSA ---
   const [isLayoutOpen, setIsLayoutOpen] = useState(false);
   const [isMatrixOpen, setIsMatrixOpen] = useState(false);
-
-  // --- STATI LAYOUT ---
   const [useHeader, setUseHeader] = useState(false);
   const [headerText, setHeaderText] = useState('');
   const [headerAlign, setHeaderAlign] = useState('left');
-
   const [useFooter, setUseFooter] = useState(false);
   const [footerText, setFooterText] = useState('');
   const [footerAlign, setFooterAlign] = useState('left');
-
   const [usePagination, setUsePagination] = useState(false);
   const [paginationAlign, setPaginationAlign] = useState('right');
-
-  // Stati Filigrane Testuali
   const [useWatermark, setUseWatermark] = useState(false);
   const [useGridWatermark, setUseGridWatermark] = useState(false);
   const [useSecurityWatermark, setUseSecurityWatermark] = useState(false);
   const [watermarkText, setWatermarkText] = useState('');
   const [textOpacity, setTextOpacity] = useState(0.25);
   const [textSize, setTextSize] = useState(30);
-  
-  // Stato Logo Filigrana
   const [useLogoWatermark, setUseLogoWatermark] = useState(false);
   const [logoFile, setLogoFile] = useState(null);
   const [logoOpacity, setLogoOpacity] = useState(0.15);
   const [logoSize, setLogoSize] = useState(150);
 
-  // --- LOGICA DI CALCOLO POSIZIONE ---
   const getXPos = (align, textWidth, pageWidth) => {
     if (align === 'center') return (pageWidth / 2) - (textWidth / 2);
     if (align === 'right') return pageWidth - textWidth - 40;
-    return 40; // left
+    return 40;
   };
 
-  // --- LIVE PREVIEW ---
   const generatePreview = useCallback(async () => {
-    if (files.length === 0) {
-      setPreviewUrl(null);
-      return;
-    }
-
+    if (files.length === 0) { setPreviewUrl(null); return; }
     try {
       const firstFile = files[0].file;
       const arrayBuffer = await firstFile.arrayBuffer();
       const previewPdf = await PDFDocument.create();
       const fontBold = await previewPdf.embedFont(StandardFonts.HelveticaBold);
       const fontNormal = await previewPdf.embedFont(StandardFonts.Helvetica);
-      
       let page;
       if (firstFile.type === 'application/pdf') {
         const sourcePdf = await PDFDocument.load(arrayBuffer);
@@ -190,29 +171,21 @@ export default function DigitrikWorkstation() {
         const dims = img.scaleToFit(page.getWidth() - 40, page.getHeight() - 40);
         page.drawImage(img, { x: page.getWidth()/2 - dims.width/2, y: page.getHeight()/2 - dims.height/2, width: dims.width, height: dims.height });
       } else { return; }
-
       const { width, height } = page.getSize();
-
       if (useHeader && headerText.trim() !== '') {
         const text = headerText.toUpperCase();
-        const fSize = 9;
-        const tWidth = fontBold.widthOfTextAtSize(text, fSize);
-        page.drawText(text, { x: getXPos(headerAlign, tWidth, width), y: height - 40, size: fSize, font: fontBold, color: rgb(0.3, 0.3, 0.3) });
+        const tWidth = fontBold.widthOfTextAtSize(text, 9);
+        page.drawText(text, { x: getXPos(headerAlign, tWidth, width), y: height - 40, size: 9, font: fontBold, color: rgb(0.3, 0.3, 0.3) });
       }
-
       if (useFooter && footerText.trim() !== '') {
-        const fSize = 9;
-        const tWidth = fontNormal.widthOfTextAtSize(footerText, fSize);
-        page.drawText(footerText, { x: getXPos(footerAlign, tWidth, width), y: 30, size: fSize, font: fontNormal, color: rgb(0.3, 0.3, 0.3) });
+        const tWidth = fontNormal.widthOfTextAtSize(footerText, 9);
+        page.drawText(footerText, { x: getXPos(footerAlign, tWidth, width), y: 30, size: 9, font: fontNormal, color: rgb(0.3, 0.3, 0.3) });
       }
-
       if (usePagination) {
         const text = `Pag. 1 / ${files.length}`;
-        const fSize = 9;
-        const tWidth = fontNormal.widthOfTextAtSize(text, fSize);
-        page.drawText(text, { x: getXPos(paginationAlign, tWidth, width), y: 30, size: fSize, font: fontNormal, color: rgb(0.4, 0.4, 0.4) });
+        const tWidth = fontNormal.widthOfTextAtSize(text, 9);
+        page.drawText(text, { x: getXPos(paginationAlign, tWidth, width), y: 30, size: 9, font: fontNormal, color: rgb(0.4, 0.4, 0.4) });
       }
-
       if (watermarkText.trim() !== '') {
         if (useWatermark) {
           const textW = fontBold.widthOfTextAtSize(watermarkText, textSize);
@@ -232,7 +205,6 @@ export default function DigitrikWorkstation() {
           page.drawText(secText, { x: width/2 - (textW/2)*Math.cos(angleRad), y: height/2 - (textW/2)*Math.sin(angleRad), size: textSize * 1.6, font: fontBold, color: rgb(0.5, 0.1, 0.1), opacity: textOpacity, rotate: degrees(60) });
         }
       }
-
       if (useLogoWatermark && logoFile) {
         const logoBuf = await logoFile.arrayBuffer();
         const logoImg = logoFile.type === 'image/png' ? await previewPdf.embedPng(logoBuf) : await previewPdf.embedJpg(logoBuf);
@@ -241,7 +213,6 @@ export default function DigitrikWorkstation() {
           for (let y = 30; y < height; y += logoSize * 1.2) page.drawImage(logoImg, { x, y, width: dims.width, height: dims.height, opacity: logoOpacity });
         }
       }
-
       const pdfBytes = await previewPdf.save();
       const blob = new Blob([pdfBytes], { type: 'application/pdf' });
       if (previewUrl) URL.revokeObjectURL(previewUrl);
@@ -285,12 +256,13 @@ export default function DigitrikWorkstation() {
   const executeTrick = async () => {
     if (files.length === 0) return alert("Coda vuota.");
 
-    // --- LOGICA CURIOSITÀ CASUALE ---
+    // --- LOGICA CURIOSITÀ OTTIMIZZATA ---
     const keys = Object.keys(fileEncyclopedia);
     const randomKey = keys[Math.floor(Math.random() * keys.length)];
     const randomCuriosity = fileEncyclopedia[randomKey].curiosity;
     
-    const promptMessage = `💡 LO SAPEVI? (${randomKey})\n"${randomCuriosity}"\n\n---\nCome vuoi battezzare il file finale?`;
+    // Messaggio strutturato per massima chiarezza
+    const promptMessage = `RINOMINA IL TUO FILE\n\nDigita il nome finale qui sotto:\n___________________________________\n\n(💡 Lo sapevi? Per il formato ${randomKey}: ${randomCuriosity})`;
     const customName = prompt(promptMessage, "Digitrik_Result");
     
     if (!customName) return; 
@@ -346,8 +318,6 @@ export default function DigitrikWorkstation() {
       }
 
       const pages = mergedPdf.getPages();
-      const totalPages = pages.length;
-
       pages.forEach((page, index) => {
         const { width, height } = page.getSize();
         if (useHeader && headerText.trim() !== '') {
@@ -360,11 +330,10 @@ export default function DigitrikWorkstation() {
           page.drawText(footerText, { x: getXPos(footerAlign, tWidth, width), y: 30, size: 9, font: fontNormal, color: rgb(0.3, 0.3, 0.3) });
         }
         if (usePagination) {
-          const text = `Pag. ${index + 1} / ${totalPages}`;
+          const text = `Pag. ${index + 1} / ${pages.length}`;
           const tWidth = fontNormal.widthOfTextAtSize(text, 9);
           page.drawText(text, { x: getXPos(paginationAlign, tWidth, width), y: 30, size: 9, font: fontNormal, color: rgb(0.4, 0.4, 0.4) });
         }
-
         if (watermarkText.trim() !== '') {
           if (useWatermark) {
             const textW = fontBold.widthOfTextAtSize(watermarkText, textSize);
@@ -458,43 +427,29 @@ export default function DigitrikWorkstation() {
             </Droppable>
           </DragDropContext>
 
-          {/* --- ENCICLOPEDIA DEI FILE --- */}
           <div className="mt-12 p-10 bg-[#0a0a0a] border border-white/5 rounded-[3rem] space-y-8">
             <div className="flex flex-col gap-2">
               <span className="text-blue-500 font-black italic text-[10px] uppercase tracking-[0.4em] ml-1">Database Digitrik</span>
               <h2 className="text-3xl font-black text-white uppercase italic tracking-tighter">Enciclopedia dei File</h2>
             </div>
-
             <div className="relative">
-              <select 
-                onChange={(e) => setSelectedInfo(fileEncyclopedia[e.target.value])}
-                className="w-full bg-[#111] border border-white/10 rounded-2xl p-5 appearance-none font-bold text-gray-300 focus:border-blue-600 outline-none cursor-pointer uppercase text-xs tracking-widest italic"
-              >
+              <select onChange={(e) => setSelectedInfo(fileEncyclopedia[e.target.value])} className="w-full bg-[#111] border border-white/10 rounded-2xl p-5 appearance-none font-bold text-gray-300 focus:border-blue-600 outline-none cursor-pointer uppercase text-xs tracking-widest italic">
                 <option value="">Seleziona un formato per la consultazione...</option>
-                {Object.keys(fileEncyclopedia).sort().map(name => (
-                  <option key={name} value={name}>{name}</option>
-                ))}
+                {Object.keys(fileEncyclopedia).sort().map(name => (<option key={name} value={name}>{name}</option>))}
               </select>
               <ChevronDown className="absolute right-6 top-1/2 -translate-y-1/2 text-blue-600 pointer-events-none" size={20} />
             </div>
-
             {selectedInfo && (
               <div className="bg-blue-600/[0.03] border border-blue-600/20 rounded-[2rem] p-8 animate-in fade-in zoom-in duration-500">
                 <div className="flex justify-between items-center mb-6">
                   <span className="bg-blue-600 text-white text-[9px] font-black px-3 py-1.5 rounded-full uppercase tracking-widest italic">Info di Sistema</span>
-                  <div className="flex items-center gap-2 text-[9px] text-gray-500 font-black uppercase tracking-widest">
-                    <RefreshCcw size={12} className="text-blue-500" /> Tempo di lettura stimato: 25s
-                  </div>
+                  <div className="flex items-center gap-2 text-[9px] text-gray-500 font-black uppercase tracking-widest"><RefreshCcw size={12} className="text-blue-500" /> Tempo di lettura stimato: 25s</div>
                 </div>
-                
                 <div className="space-y-6">
                   <div>
                     <span className="text-[10px] font-black text-gray-500 uppercase tracking-widest block mb-2">Protocollo: {selectedInfo.type}</span>
-                    <p className="text-gray-300 text-sm leading-relaxed font-medium italic">
-                      {selectedInfo.desc}
-                    </p>
+                    <p className="text-gray-300 text-sm leading-relaxed font-medium italic">{selectedInfo.desc}</p>
                   </div>
-                  
                   <div className="flex gap-4 items-start bg-black/60 p-6 rounded-2xl border border-white/5 shadow-inner">
                     <Sparkles className="text-blue-500 shrink-0 mt-1" size={20} />
                     <div>
@@ -509,11 +464,9 @@ export default function DigitrikWorkstation() {
         </div>
 
         <div className="col-span-4 bg-[#0a0a0a] p-8 space-y-6 relative overflow-y-auto max-h-screen">
-
           <button onClick={executeTrick} disabled={isProcessing} className="w-full bg-blue-600 hover:bg-blue-700 disabled:bg-gray-800 text-white py-8 rounded-[2rem] font-black italic uppercase tracking-widest text-xl transition-all flex flex-col items-center justify-center gap-2 shadow-2xl">
             {isProcessing ? <RefreshCcw className="animate-spin" size={24} /> : <><Wand2 size={24} /><span>ESEGUI TRICK</span></>}
           </button>
-
           <div className="relative">
             <select value={action} onChange={(e) => setAction(e.target.value)} className="w-full bg-[#111] border border-white/10 rounded-[1.5rem] p-5 appearance-none font-bold italic text-white text-sm focus:border-blue-600 outline-none">
               <option value="conversione">'CONVERTI IN .pdf'</option>
@@ -522,17 +475,11 @@ export default function DigitrikWorkstation() {
             </select>
             <ChevronDown className="absolute right-5 top-1/2 -translate-y-1/2 text-gray-500 pointer-events-none" size={18} />
           </div>
-
-          {/* LAYOUT TOOLS A SCOMPARSA */}
+          {/* LAYOUT TOOLS */}
           <div className="bg-[#111] rounded-2xl border border-white/5 overflow-hidden">
-            <button 
-              onClick={() => setIsLayoutOpen(!isLayoutOpen)}
-              className="w-full p-5 flex items-center justify-between text-[10px] font-black uppercase text-gray-400 hover:text-white transition-colors italic"
-            >
-              <span>Layout & Info</span>
-              {isLayoutOpen ? <ChevronUp size={16} /> : <ChevronDown size={16} />}
+            <button onClick={() => setIsLayoutOpen(!isLayoutOpen)} className="w-full p-5 flex items-center justify-between text-[10px] font-black uppercase text-gray-400 hover:text-white transition-colors italic">
+              <span>Layout & Info</span> {isLayoutOpen ? <ChevronUp size={16} /> : <ChevronDown size={16} />}
             </button>
-            
             {isLayoutOpen && (
               <div className="p-5 pt-0 space-y-5 border-t border-white/5 mt-2 animate-in fade-in slide-in-from-top-1">
                 <div className="space-y-3">
@@ -545,7 +492,6 @@ export default function DigitrikWorkstation() {
                   </div>
                   <input type="text" placeholder="Testo intestazione..." value={headerText} onChange={e => setHeaderText(e.target.value)} className="w-full bg-black border border-white/5 rounded-xl p-3 text-xs text-white outline-none focus:border-blue-600/50" />
                 </div>
-
                 <div className="space-y-3">
                   <div className="flex justify-between items-center">
                     <label className="flex items-center gap-2 cursor-pointer">
@@ -556,7 +502,6 @@ export default function DigitrikWorkstation() {
                   </div>
                   <input type="text" placeholder="Testo piè di pagina..." value={footerText} onChange={e => setFooterText(e.target.value)} className="w-full bg-black border border-white/5 rounded-xl p-3 text-xs text-white outline-none focus:border-blue-600/50" />
                 </div>
-
                 <div className="flex justify-between items-center pt-2">
                   <label className="flex items-center gap-2 cursor-pointer">
                     <input type="checkbox" checked={usePagination} onChange={e => setUsePagination(e.target.checked)} className="w-3.5 h-3.5 rounded bg-black border-white/10" />
@@ -567,21 +512,14 @@ export default function DigitrikWorkstation() {
               </div>
             )}
           </div>
-
-          {/* PROTEZIONE MATRIX A SCOMPARSA */}
+          {/* PROTEZIONE MATRIX */}
           <div className="bg-[#111] rounded-2xl border border-white/5 overflow-hidden">
-            <button 
-              onClick={() => setIsMatrixOpen(!isMatrixOpen)}
-              className="w-full p-5 flex items-center justify-between text-[10px] font-black uppercase text-gray-400 hover:text-white transition-colors italic"
-            >
-              <span>Protezione Matrix</span>
-              {isMatrixOpen ? <ChevronUp size={16} /> : <ChevronDown size={16} />}
+            <button onClick={() => setIsMatrixOpen(!isMatrixOpen)} className="w-full p-5 flex items-center justify-between text-[10px] font-black uppercase text-gray-400 hover:text-white transition-colors italic">
+              <span>Protezione Matrix</span> {isMatrixOpen ? <ChevronUp size={16} /> : <ChevronDown size={16} />}
             </button>
-
             {isMatrixOpen && (
               <div className="p-5 pt-0 space-y-6 border-t border-white/5 mt-2 animate-in fade-in slide-in-from-top-1">
                 <input type="text" placeholder="Testo filigrana..." value={watermarkText} onChange={(e) => setWatermarkText(e.target.value)} className="w-full bg-black border border-white/5 rounded-xl p-4 text-xs font-bold italic text-white outline-none focus:border-blue-600/50" />
-
                 <div className="grid grid-cols-1 gap-3">
                   {[ {s:useWatermark, f:setUseWatermark, t:'Nastro'}, {s:useGridWatermark, f:setUseGridWatermark, t:'Griglia'}, {s:useSecurityWatermark, f:setUseSecurityWatermark, t:'Security'} ].map(item => (
                     <label key={item.t} className="flex items-center gap-3 cursor-pointer">
@@ -590,7 +528,6 @@ export default function DigitrikWorkstation() {
                     </label>
                   ))}
                 </div>
-
                 <div className="space-y-4 pt-2 border-t border-white/5">
                   <div className="flex flex-col gap-2">
                     <div className="flex justify-between text-[9px] font-black uppercase"><span className="text-gray-500">Dimensione Testo</span><span className="text-blue-500">{textSize}px</span></div>
@@ -601,19 +538,16 @@ export default function DigitrikWorkstation() {
                     <input type="range" min="0.05" max="1" step="0.05" value={textOpacity} onChange={(e) => setTextOpacity(parseFloat(e.target.value))} className="w-full h-1 bg-black rounded-lg appearance-none cursor-pointer accent-blue-600" />
                   </div>
                 </div>
-
                 <div className="pt-4 space-y-4 border-t border-white/5">
                   <label className="flex items-center gap-3 cursor-pointer">
                     <input type="checkbox" checked={useLogoWatermark} onChange={(e) => setUseLogoWatermark(e.target.checked)} className="w-4 h-4 text-blue-600 bg-black border-white/10 rounded" />
                     <span className="text-[10px] font-black uppercase text-blue-500 italic">Logo come Griglia</span>
                   </label>
-
                   <div {...getLogoRootProps()} className={`border border-dashed rounded-xl p-4 text-center cursor-pointer transition-all ${isLogoDragActive ? 'border-blue-600 bg-blue-600/5' : 'border-white/10 hover:bg-white/[0.02]'}`}>
                     <input {...getLogoInputProps()} />
                     <ImageIcon className={`mx-auto mb-2 ${logoFile ? 'text-blue-500' : 'text-gray-700'}`} size={20} />
                     <p className="text-[9px] font-bold text-gray-500 uppercase">{logoFile ? logoFile.name : "Carica Logo"}</p>
                   </div>
-
                   <div className="space-y-4">
                     <div className="flex flex-col gap-2">
                       <div className="flex justify-between text-[9px] font-black uppercase"><span className="text-gray-500">Dimensione Logo</span><span className="text-blue-500">{logoSize}px</span></div>
