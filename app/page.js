@@ -1,8 +1,8 @@
 'use client';
 
-import React, { useCallback, useState, useEffect, useRef } from 'react';
+import React, { useCallback, useState, useEffect } from 'react';
 import { useDropzone } from 'react-dropzone';
-import { PDFDocument, rgb, degrees, StandardFonts } from 'pdf-lib';
+// NOTA: Import dinamico rimosso qui, usato dentro generatePdf
 import { DragDropContext, Droppable, Draggable } from '@hello-pangea/dnd';
 import { 
   FileText, Plus, Trash2, RefreshCcw, Wand2, GripVertical, 
@@ -96,7 +96,6 @@ const Toast = ({ message, type, onClose }) => (
 
 // --- MAIN APP ---
 export default function DigitrikPro() {
-  // CORE STATE
   const [files, setFiles] = useState([]);
   const [activeTab, setActiveTab] = useState('files'); 
   const [previewUrl, setPreviewUrl] = useState(null);
@@ -168,10 +167,19 @@ export default function DigitrikPro() {
   // --- LOGIC: PDF ENGINE ---
   const generatePdf = async (isPreview = false) => {
     if (files.length === 0) return null;
+    
+    if (!isPreview && config.encryptPdf && !config.userPassword) {
+      showToast("Password mancante per la crittografia!", "error");
+      throw new Error("Password missing");
+    }
+
     try {
+      // IMPORT DINAMICO CRUCIALE PER EVITARE TREE-SHAKING DI TURBOPACK
+      const { PDFDocument, StandardFonts, rgb, degrees } = await import('pdf-lib');
+
       const doc = await PDFDocument.create();
       
-      // Metadata (Solo se non è anteprima)
+      // Metadata
       if (!isPreview) {
         if (config.ghostMode) {
           doc.setTitle(""); doc.setAuthor(""); doc.setCreator("Ghost"); doc.setProducer("");
@@ -222,7 +230,10 @@ export default function DigitrikPro() {
           page.drawImage(img, { x: page.getWidth()/2 - dims.width/2, y: page.getHeight()/2 - dims.height/2, width: dims.width, height: dims.height });
         } else if (f.file.type.includes('text')) {
           const txt = await f.file.text();
-          const page = doc.addPage();
+          
+          // FIX: USIAMO 'let' AL POSTO DI 'const' PER PERMETTERE LA RIASSEGNAZIONE DI PAGE
+          let page = doc.addPage();
+          
           const fontSize = 10;
           const lineHeight = 12;
           const lines = txt.split(/\r\n|\r|\n/);
@@ -232,7 +243,10 @@ export default function DigitrikPro() {
           const maxLines = isPreview ? 60 : lines.length;
           
           for (let i = 0; i < maxLines; i++) {
-             if (y < 50 && !isPreview) { page = doc.addPage(); y = 800; }
+             if (y < 50 && !isPreview) { 
+               page = doc.addPage(); // QUI AVVENIVA L'ERRORE PRIMA
+               y = 800; 
+             }
              page.drawText(lines[i].replace(/[^\x00-\x7F]/g, "?"), { x, y, size: fontSize, font: fontMono, color: rgb(0,0,0) });
              y -= lineHeight;
           }
@@ -283,7 +297,7 @@ export default function DigitrikPro() {
         }
       });
 
-      // ENCRYPTION (Solo se non è anteprima e se c'è password)
+      // ENCRYPTION
       if (!isPreview && config.encryptPdf && config.userPassword) {
         doc.encrypt({
           userPassword: config.userPassword,
@@ -303,8 +317,7 @@ export default function DigitrikPro() {
       return await doc.save();
     } catch (e) {
       console.error(e);
-      // Non mostrare errori in console per il preview, solo per il download vero
-      if(!isPreview) showToast("Errore: " + e.message, "error");
+      if(!isPreview && e.message !== "Password missing") showToast("Errore: " + e.message, "error");
       return null;
     }
   };
@@ -324,23 +337,16 @@ export default function DigitrikPro() {
     return () => clearTimeout(t);
   }, [files, config]);
 
-  // --- LOGICA DI ESPORTAZIONE (MODALE + DOWNLOAD) ---
-  
-  // 1. Click su "Esporta" -> Apre Modale (o avvisa se manca password)
   const handleExportClick = () => {
     if (files.length === 0) {
       showToast("Nessun file da esportare!", "error");
       return;
     }
-    
-    // Check sicurezza
     if (config.encryptPdf && !config.userPassword) {
       showToast("Inserisci una password per criptare il file!", "error");
       setActiveTab('security');
       return;
     }
-
-    // Set curiosity e apri modale
     const keys = Object.keys(fileEncyclopedia);
     const randomKey = keys[Math.floor(Math.random() * keys.length)];
     setTrickCuriosity({ key: randomKey, text: fileEncyclopedia[randomKey].curiosity });
@@ -348,13 +354,10 @@ export default function DigitrikPro() {
     setShowRenameModal(true);
   };
 
-  // 2. Click su "Conferma" nel Modale -> Genera e Scarica
   const handleConfirmDownload = async () => {
     setShowRenameModal(false);
     setIsProcessing(true);
-    
     const pdfBytes = await generatePdf(false);
-    
     if (pdfBytes) {
       const blob = new Blob([pdfBytes], { type: 'application/pdf' });
       const url = URL.createObjectURL(blob);
@@ -364,11 +367,9 @@ export default function DigitrikPro() {
       link.click();
       showToast("Download completato con successo!");
     }
-    
     setIsProcessing(false);
   };
 
-  // --- UI HELPERS ---
   const NavItem = ({ id, icon: Icon, label }) => (
     <button 
       onClick={() => setActiveTab(id)}
@@ -381,8 +382,7 @@ export default function DigitrikPro() {
 
   return (
     <div className="h-screen bg-zinc-950 text-zinc-100 font-sans flex overflow-hidden selection:bg-blue-500/30">
-      
-      {/* MODAL RINOMINA */}
+      {/* MODAL */}
       {showRenameModal && (
         <div className="fixed inset-0 z-[100] flex items-center justify-center bg-black/80 backdrop-blur-sm transition-opacity duration-300">
           <div className="bg-[#0a0a0a] border border-blue-600/30 rounded-[2rem] w-[90%] max-w-lg p-8 shadow-[0_0_50px_rgba(37,99,235,0.1)] relative">
@@ -413,79 +413,48 @@ export default function DigitrikPro() {
         </div>
       )}
 
-      {/* 1. LEFT SIDEBAR */}
+      {/* LEFT SIDEBAR */}
       <aside className="w-64 border-r border-white/5 bg-zinc-950 flex flex-col p-4 z-20">
         <div className="mb-8 px-2 flex items-center gap-2">
           <div className="w-8 h-8 bg-blue-600 rounded-lg flex items-center justify-center">
             <Wand2 size={18} className="text-white" />
           </div>
-          <div>
-            <h1 className="text-lg font-black italic tracking-tighter leading-none">DIGITRIK</h1>
-            <span className="text-[10px] font-bold text-blue-500 uppercase tracking-[0.2em]">Pro Suite</span>
-          </div>
+          <div><h1 className="text-lg font-black italic tracking-tighter leading-none">DIGITRIK</h1><span className="text-[10px] font-bold text-blue-500 uppercase tracking-[0.2em]">Pro Suite</span></div>
         </div>
-
         <nav className="flex-1">
           <SectionTitle icon={LayoutTemplate} title="Workspace" />
           <NavItem id="files" icon={FileText} label="Gestione File" />
           <NavItem id="layout" icon={Settings} label="Layout & Export" />
-          
           <div className="h-6" />
           <SectionTitle icon={Shield} title="Security & Brand" />
           <NavItem id="watermark" icon={ImageIcon} label="Watermark & Logo" />
           <NavItem id="security" icon={Lock} label="Vault & Ghost" />
         </nav>
-
         <div className={`mt-auto p-4 rounded-2xl border ${health.status === 'crit' ? 'bg-red-950/20 border-red-500/20' : 'bg-zinc-900 border-white/5'}`}>
-          <div className="flex justify-between items-end mb-2">
-            <span className="text-[10px] font-bold text-zinc-500 uppercase">System Health</span>
-            <span className={`text-xs font-black ${health.status === 'ok' ? 'text-green-500' : 'text-yellow-500'}`}>{health.score}%</span>
-          </div>
-          <div className="w-full h-1 bg-zinc-800 rounded-full mb-3 overflow-hidden">
-            <div className={`h-full transition-all duration-500 ${health.status === 'ok' ? 'bg-green-500' : 'bg-yellow-500'}`} style={{width: `${health.score}%`}} />
-          </div>
-          <div className="flex items-center gap-2 text-[10px] text-zinc-400">
-            <Activity size={12} /> Peso Stimato: <span className="text-zinc-200">{health.size} MB</span>
-          </div>
+          <div className="flex justify-between items-end mb-2"><span className="text-[10px] font-bold text-zinc-500 uppercase">System Health</span><span className={`text-xs font-black ${health.status === 'ok' ? 'text-green-500' : 'text-yellow-500'}`}>{health.score}%</span></div>
+          <div className="w-full h-1 bg-zinc-800 rounded-full mb-3 overflow-hidden"><div className={`h-full transition-all duration-500 ${health.status === 'ok' ? 'bg-green-500' : 'bg-yellow-500'}`} style={{width: `${health.score}%`}} /></div>
+          <div className="flex items-center gap-2 text-[10px] text-zinc-400"><Activity size={12} /> Peso Stimato: <span className="text-zinc-200">{health.size} MB</span></div>
         </div>
       </aside>
 
-      {/* 2. CENTER STAGE */}
+      {/* CENTER */}
       <main className="flex-1 flex flex-col relative bg-zinc-900/50">
         <header className="h-16 border-b border-white/5 flex items-center justify-between px-8 bg-zinc-950/80 backdrop-blur-md sticky top-0 z-10">
-          <div className="flex items-center gap-4">
-            <h2 className="text-sm font-bold text-zinc-300 uppercase tracking-wider">
-              {activeTab === 'files' ? 'File Manager' : activeTab === 'layout' ? 'Layout Config' : activeTab === 'watermark' ? 'Branding' : 'Security Vault'}
-            </h2>
-          </div>
-          <div className="flex items-center gap-3">
-             <div className="text-[10px] font-bold text-zinc-500 uppercase px-3 py-1 bg-zinc-900 rounded-full border border-white/5">
-                {files.length} File Caricati
-             </div>
-          </div>
+          <div className="flex items-center gap-4"><h2 className="text-sm font-bold text-zinc-300 uppercase tracking-wider">{activeTab === 'files' ? 'File Manager' : activeTab === 'layout' ? 'Layout Config' : activeTab === 'watermark' ? 'Branding' : 'Security Vault'}</h2></div>
+          <div className="flex items-center gap-3"><div className="text-[10px] font-bold text-zinc-500 uppercase px-3 py-1 bg-zinc-900 rounded-full border border-white/5">{files.length} File Caricati</div></div>
         </header>
-
         <div className="flex-1 overflow-y-auto p-8">
           <div {...getRootProps()} className={`relative border-2 border-dashed rounded-[2rem] transition-all duration-300 group ${isDragActive ? 'border-blue-500 bg-blue-500/5 scale-[0.99]' : 'border-zinc-800 hover:border-zinc-700 hover:bg-zinc-900/50'}`}>
             <input {...getInputProps()} />
-            
             {files.length === 0 ? (
               <div className="h-64 flex flex-col items-center justify-center text-center p-10 cursor-pointer">
-                <div className="w-16 h-16 bg-zinc-900 rounded-2xl flex items-center justify-center mb-4 group-hover:scale-110 transition-transform shadow-2xl">
-                  <UploadCloud size={32} className="text-zinc-600 group-hover:text-blue-500 transition-colors" />
-                </div>
+                <div className="w-16 h-16 bg-zinc-900 rounded-2xl flex items-center justify-center mb-4 group-hover:scale-110 transition-transform shadow-2xl"><UploadCloud size={32} className="text-zinc-600 group-hover:text-blue-500 transition-colors" /></div>
                 <h3 className="text-lg font-bold text-zinc-300">Trascina qui i tuoi documenti</h3>
                 <p className="text-sm text-zinc-500 mt-2 max-w-xs">Supportiamo PDF, Immagini HQ e file di testo. Il motore Digitrik si occuperà del resto.</p>
               </div>
             ) : (
               <div className="p-8">
-                <DragDropContext onDragEnd={(res) => {
-                  if(!res.destination) return;
-                  const items = Array.from(files);
-                  const [reordered] = items.splice(res.source.index, 1);
-                  items.splice(res.destination.index, 0, reordered);
-                  setFiles(items);
-                }}>
+                <DragDropContext onDragEnd={(res) => { if(!res.destination) return; const items = Array.from(files); const [reordered] = items.splice(res.source.index, 1); items.splice(res.destination.index, 0, reordered); setFiles(items); }}>
                   <Droppable droppableId="list" direction="horizontal">
                     {(provided) => (
                       <div {...provided.droppableProps} ref={provided.innerRef} className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
@@ -493,25 +462,15 @@ export default function DigitrikPro() {
                           <Draggable key={f.id} draggableId={f.id} index={i}>
                             {(provided, snapshot) => (
                               <div ref={provided.innerRef} {...provided.draggableProps} {...provided.dragHandleProps} className={`bg-zinc-950 border border-white/5 p-4 rounded-xl flex items-center gap-4 group hover:border-blue-500/30 transition-all ${snapshot.isDragging ? 'shadow-2xl ring-2 ring-blue-500 rotate-2' : ''}`}>
-                                <div className="w-10 h-10 bg-zinc-900 rounded-lg flex items-center justify-center shrink-0">
-                                  <FileText size={20} className="text-blue-500" />
-                                </div>
-                                <div className="min-w-0 flex-1">
-                                  <p className="text-xs font-bold text-zinc-200 truncate">{f.file.name}</p>
-                                  <p className="text-[10px] text-zinc-500 font-mono">{(f.file.size/1024).toFixed(1)} KB</p>
-                                </div>
-                                <button onClick={(e) => { e.stopPropagation(); setFiles(files.filter(x => x.id !== f.id)); }} className="p-2 hover:text-red-500 text-zinc-600 transition-colors">
-                                  <Trash2 size={16} />
-                                </button>
+                                <div className="w-10 h-10 bg-zinc-900 rounded-lg flex items-center justify-center shrink-0"><FileText size={20} className="text-blue-500" /></div>
+                                <div className="min-w-0 flex-1"><p className="text-xs font-bold text-zinc-200 truncate">{f.file.name}</p><p className="text-[10px] text-zinc-500 font-mono">{(f.file.size/1024).toFixed(1)} KB</p></div>
+                                <button onClick={(e) => { e.stopPropagation(); setFiles(files.filter(x => x.id !== f.id)); }} className="p-2 hover:text-red-500 text-zinc-600 transition-colors"><Trash2 size={16} /></button>
                               </div>
                             )}
                           </Draggable>
                         ))}
                         {provided.placeholder}
-                        <div className="border border-dashed border-zinc-800 rounded-xl flex flex-col items-center justify-center p-4 hover:bg-zinc-900/50 transition-colors cursor-pointer text-zinc-600 hover:text-zinc-400">
-                          <Plus size={24} />
-                          <span className="text-[10px] font-bold mt-2 uppercase">Aggiungi</span>
-                        </div>
+                        <div className="border border-dashed border-zinc-800 rounded-xl flex flex-col items-center justify-center p-4 hover:bg-zinc-900/50 transition-colors cursor-pointer text-zinc-600 hover:text-zinc-400"><Plus size={24} /><span className="text-[10px] font-bold mt-2 uppercase">Aggiungi</span></div>
                       </div>
                     )}
                   </Droppable>
@@ -519,23 +478,12 @@ export default function DigitrikPro() {
               </div>
             )}
           </div>
-
-          {/* PREVIEW SECTION (Collapsible) */}
           {previewUrl && (
             <div className="mt-8 animate-in fade-in slide-in-from-bottom-4 duration-500">
-              <button 
-                onClick={() => setIsPreviewOpen(!isPreviewOpen)}
-                className="w-full flex justify-between items-center mb-4 px-2 group"
-              >
-                <div className="flex items-center gap-2">
-                  <div className="text-zinc-400 uppercase tracking-widest text-[10px] font-bold flex items-center gap-2 group-hover:text-blue-500 transition-colors">
-                    {isPreviewOpen ? <Eye size={14} /> : <EyeOff size={14} />}
-                    Live Output Preview {isPreviewOpen ? '' : '(Hidden)'}
-                  </div>
-                </div>
+              <button onClick={() => setIsPreviewOpen(!isPreviewOpen)} className="w-full flex justify-between items-center mb-4 px-2 group">
+                <div className="flex items-center gap-2"><div className="text-zinc-400 uppercase tracking-widest text-[10px] font-bold flex items-center gap-2 group-hover:text-blue-500 transition-colors">{isPreviewOpen ? <Eye size={14} /> : <EyeOff size={14} />} Live Output Preview {isPreviewOpen ? '' : '(Hidden)'}</div></div>
                 <span className="text-[10px] text-zinc-500 bg-zinc-900 px-2 py-1 rounded">Rendering Real-time</span>
               </button>
-              
               {isPreviewOpen && (
                 <div className="bg-zinc-950 rounded-2xl border border-white/5 overflow-hidden shadow-2xl relative h-[500px]">
                   <iframe src={`${previewUrl}#toolbar=0&navpanes=0`} className="w-full h-full opacity-90 hover:opacity-100 transition-opacity" />
@@ -546,10 +494,9 @@ export default function DigitrikPro() {
         </div>
       </main>
 
-      {/* 3. RIGHT SIDEBAR */}
+      {/* RIGHT SIDEBAR */}
       <aside className="w-80 border-l border-white/5 bg-zinc-950 p-6 flex flex-col overflow-y-auto">
         <div className="flex-1 space-y-8">
-          
           {activeTab === 'files' && (
             <div className="space-y-6 animate-in fade-in slide-in-from-right-2">
               <div>
@@ -561,15 +508,8 @@ export default function DigitrikPro() {
                     { id: 'unisci', label: 'Unisci File (Merge)', icon: Layers },
                     { id: 'estrai', label: 'Estrai Pagine', icon: FileOutput }
                   ].map(act => (
-                    <button 
-                      key={act.id} 
-                      onClick={() => setConfig({ ...config, action: act.id })}
-                      className={`w-full flex items-center justify-between p-3 rounded-xl border transition-all ${config.action === act.id ? 'bg-zinc-100 border-zinc-100 text-zinc-950' : 'bg-zinc-900 border-zinc-800 text-zinc-400 hover:border-zinc-700'}`}
-                    >
-                      <div className="flex items-center gap-3">
-                        <act.icon size={16} />
-                        <span className="text-xs font-bold">{act.label}</span>
-                      </div>
+                    <button key={act.id} onClick={() => setConfig({ ...config, action: act.id })} className={`w-full flex items-center justify-between p-3 rounded-xl border transition-all ${config.action === act.id ? 'bg-zinc-100 border-zinc-100 text-zinc-950' : 'bg-zinc-900 border-zinc-800 text-zinc-400 hover:border-zinc-700'}`}>
+                      <div className="flex items-center gap-3"><act.icon size={16} /><span className="text-xs font-bold">{act.label}</span></div>
                       {config.action === act.id && <Check size={14} />}
                     </button>
                   ))}
@@ -612,17 +552,14 @@ export default function DigitrikPro() {
               <SectionTitle icon={Tag} title="Filigrana Testuale" />
               <div className="p-4 bg-zinc-900 rounded-xl border border-zinc-800 space-y-4">
                 <input type="text" placeholder="Testo filigrana (es. BOZZA)" value={config.watermarkText} onChange={e => setConfig({...config, watermarkText: e.target.value})} className="w-full bg-zinc-950 border border-zinc-800 rounded-lg p-3 text-xs font-bold text-white outline-none focus:border-blue-500" />
-                
                 <div className="space-y-2">
                   <Toggle label="Nastro (Diagonale)" checked={config.useWatermark} onChange={v => setConfig({...config, useWatermark: v})} icon={Sparkles} />
                   <Toggle label="Griglia Fitta" checked={config.useGrid} onChange={v => setConfig({...config, useGrid: v})} icon={Grid3X3} />
                   <Toggle label="Security Alert" checked={config.useSecurity} onChange={v => setConfig({...config, useSecurity: v})} icon={ShieldAlert} />
                 </div>
-
                 <SmartSlider label="Opacità" value={Math.round(config.textOpacity*100)} min={5} max={100} onChange={v => setConfig({...config, textOpacity: v/100})} unit="%" />
                 <SmartSlider label="Grandezza" value={config.textSize} min={10} max={100} onChange={v => setConfig({...config, textSize: parseInt(v)})} unit="px" />
               </div>
-
               <SectionTitle icon={IconImage} title="Logo Aziendale" />
               <div {...getLogoProps()} className="border border-dashed border-zinc-700 rounded-xl p-6 text-center hover:bg-zinc-900/50 cursor-pointer transition-all">
                 <input {...getLogoInput()} />
@@ -654,20 +591,14 @@ export default function DigitrikPro() {
             <div className="space-y-6 animate-in fade-in slide-in-from-right-2">
               <div className={`p-4 rounded-xl border transition-all ${config.ghostMode ? 'bg-red-950/20 border-red-500/50' : 'bg-zinc-900 border-zinc-800'}`}>
                 <div className="flex items-center justify-between mb-2">
-                  <div className="flex items-center gap-2 text-red-500 font-bold uppercase text-xs">
-                    <Ghost size={14} /> Ghost Protocol
-                  </div>
+                  <div className="flex items-center gap-2 text-red-500 font-bold uppercase text-xs"><Ghost size={14} /> Ghost Protocol</div>
                   <input type="checkbox" checked={config.ghostMode} onChange={e => setConfig({...config, ghostMode: e.target.checked})} className="accent-red-500 w-4 h-4" />
                 </div>
-                <p className="text-[10px] text-zinc-500 leading-relaxed">
-                  Rimuove metadati, autore e data creazione per l'anonimato.
-                </p>
+                <p className="text-[10px] text-zinc-500 leading-relaxed">Rimuove metadati, autore e data creazione per l'anonimato.</p>
               </div>
-
               <div className="space-y-3">
                 <SectionTitle icon={Lock} title="Vault Encryption (AES-256)" />
                 <Toggle label="Cripta Documento" checked={config.encryptPdf} onChange={v => setConfig({...config, encryptPdf: v})} icon={Lock} />
-                
                 {config.encryptPdf && (
                   <div className="space-y-3 p-3 bg-zinc-900 rounded-xl border border-zinc-800 animate-in fade-in slide-in-from-top-2">
                     <input type="password" placeholder="Password Utente (Obbligatoria)" value={config.userPassword} onChange={e => setConfig({...config, userPassword: e.target.value})} className="w-full bg-zinc-950 border border-zinc-700 rounded-lg p-2 text-xs text-white outline-none focus:border-blue-500 ring-1 ring-blue-500/20" />
@@ -675,7 +606,6 @@ export default function DigitrikPro() {
                   </div>
                 )}
               </div>
-
               {!config.ghostMode && (
                 <div className="space-y-3 pt-4 border-t border-white/5">
                   <SectionTitle icon={Tag} title="Metadati Pubblici" />
@@ -690,17 +620,10 @@ export default function DigitrikPro() {
         <div className="pt-6 border-t border-white/5 mt-auto">
           <div className="flex bg-zinc-900 p-1 rounded-lg mb-4">
             {[{id:'web', l:'Web', i:Feather}, {id:'balanced', l:'Std', i:Layers}, {id:'print', l:'Pro', i:Printer}].map(c => (
-              <button key={c.id} onClick={() => setConfig({...config, compression: c.id})} className={`flex-1 flex items-center justify-center gap-2 py-2 rounded-md text-[10px] font-bold uppercase transition-all ${config.compression === c.id ? 'bg-zinc-800 text-white shadow-sm' : 'text-zinc-500 hover:text-zinc-300'}`}>
-                <c.i size={12} /> {c.l}
-              </button>
+              <button key={c.id} onClick={() => setConfig({...config, compression: c.id})} className={`flex-1 flex items-center justify-center gap-2 py-2 rounded-md text-[10px] font-bold uppercase transition-all ${config.compression === c.id ? 'bg-zinc-800 text-white shadow-sm' : 'text-zinc-500 hover:text-zinc-300'}`}><c.i size={12} /> {c.l}</button>
             ))}
           </div>
-
-          <button 
-            onClick={handleExportClick} 
-            disabled={isProcessing || files.length === 0}
-            className="w-full py-4 bg-white text-black hover:bg-zinc-200 disabled:bg-zinc-800 disabled:text-zinc-600 rounded-xl font-black text-xs uppercase tracking-widest transition-all flex items-center justify-center gap-2 shadow-lg hover:shadow-xl hover:-translate-y-0.5 active:translate-y-0"
-          >
+          <button onClick={handleExportClick} disabled={isProcessing || files.length === 0} className="w-full py-4 bg-white text-black hover:bg-zinc-200 disabled:bg-zinc-800 disabled:text-zinc-600 rounded-xl font-black text-xs uppercase tracking-widest transition-all flex items-center justify-center gap-2 shadow-lg hover:shadow-xl hover:-translate-y-0.5 active:translate-y-0">
             {isProcessing ? <RefreshCcw className="animate-spin" size={16} /> : <Wand2 size={16} />}
             {isProcessing ? 'Elaborazione...' : 'Esporta Documento'}
           </button>
@@ -713,6 +636,4 @@ export default function DigitrikPro() {
 }
 
 // Icon helper
-const List = ({size, className}) => (
-  <svg xmlns="http://www.w3.org/2000/svg" width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className={className}><line x1="8" y1="6" x2="21" y2="6"></line><line x1="8" y1="12" x2="21" y2="12"></line><line x1="8" y1="18" x2="21" y2="18"></line><line x1="3" y1="6" x2="3.01" y2="6"></line><line x1="3" y1="12" x2="3.01" y2="12"></line><line x1="3" y1="18" x2="3.01" y2="18"></line></svg>
-);
+const List = ({size, className}) => (<svg xmlns="http://www.w3.org/2000/svg" width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className={className}><line x1="8" y1="6" x2="21" y2="6"></line><line x1="8" y1="12" x2="21" y2="12"></line><line x1="8" y1="18" x2="21" y2="18"></line><line x1="3" y1="6" x2="3.01" y2="6"></line><line x1="3" y1="12" x2="3.01" y2="12"></line><line x1="3" y1="18" x2="3.01" y2="18"></line></svg>);
