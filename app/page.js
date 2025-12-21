@@ -1,10 +1,11 @@
 'use client';
 
 import React, { useCallback, useState, useEffect } from 'react';
+import Script from 'next/script'; // L'ARMA SEGRETA
 import { useDropzone } from 'react-dropzone';
 import { DragDropContext, Droppable, Draggable } from '@hello-pangea/dnd';
 import { 
-  FileText, Plus, Trash2, RefreshCcw, Wand2, 
+  FileText, Plus, Trash2, RefreshCcw, Wand2, GripVertical, 
   ImageIcon, Eye, EyeOff, AlignLeft, AlignCenter, AlignRight, 
   Sparkles, X, Check, RotateCw, Tag, Activity, ShieldAlert, 
   Feather, Layers, Printer, Ghost, Lock, Settings, LayoutTemplate, 
@@ -102,8 +103,8 @@ export default function DigitrikPro() {
   const [isProcessing, setIsProcessing] = useState(false);
   const [toast, setToast] = useState(null);
   
-  // STATE PER LA LIBRERIA CARICATA DA CDN
-  const [isPdfLibReady, setIsPdfLibReady] = useState(false);
+  // SDK STATE
+  const [isSdkReady, setIsSdkReady] = useState(false);
 
   // UI STATE
   const [showRenameModal, setShowRenameModal] = useState(false);
@@ -132,19 +133,6 @@ export default function DigitrikPro() {
 
   // HEALTH MONITOR
   const [health, setHealth] = useState({ size: 0, status: 'ok', score: 100 });
-
-  // --- CDN LOADER (THE FIX) ---
-  useEffect(() => {
-    if (window.PDFLib) {
-      setIsPdfLibReady(true);
-      return;
-    }
-    const script = document.createElement('script');
-    script.src = "https://unpkg.com/pdf-lib@1.17.1/dist/pdf-lib.min.js";
-    script.async = true;
-    script.onload = () => setIsPdfLibReady(true);
-    document.body.appendChild(script);
-  }, []);
 
   useEffect(() => {
     let size = 0;
@@ -179,12 +167,15 @@ export default function DigitrikPro() {
   }, []);
   const { getRootProps: getLogoProps, getInputProps: getLogoInput } = useDropzone({ onDrop: onLogoDrop, accept: {'image/*': []}, multiple: false });
 
-  // --- LOGIC: PDF ENGINE ---
+  // --- LOGIC: PDF ENGINE (PURE WINDOW ACCESS) ---
   const generatePdf = async (isPreview = false) => {
-    if (files.length === 0 || !isPdfLibReady) return null;
+    if (files.length === 0) return null;
     
-    // USIAMO L'OGGETTO GLOBALE WINDOW.PDFLib
-    const { PDFDocument, StandardFonts, rgb, degrees } = window.PDFLib;
+    // Check if SDK Loaded
+    if (!window.PDFLib) {
+      showToast("Motore PDF non ancora caricato. Riprova tra 1 secondo.", "error");
+      return null;
+    }
 
     if (!isPreview && config.encryptPdf && !config.userPassword) {
       showToast("Password mancante per la crittografia!", "error");
@@ -192,6 +183,9 @@ export default function DigitrikPro() {
     }
 
     try {
+      // ACCESS GLOBAL WINDOW OBJECT
+      const { PDFDocument, StandardFonts, rgb, degrees } = window.PDFLib;
+
       const doc = await PDFDocument.create();
       
       // Metadata
@@ -210,6 +204,7 @@ export default function DigitrikPro() {
       const fontNormal = await doc.embedFont(StandardFonts.Helvetica);
       const fontMono = await doc.embedFont(StandardFonts.Courier);
 
+      // Processing
       for (const f of files) {
         let buffer;
         if (f.file.type.startsWith('image/') && !isPreview) {
@@ -261,12 +256,14 @@ export default function DigitrikPro() {
         }
       }
 
+      // Embed Logo
       let logoImg = null;
       if (config.useLogo && config.logoFile) {
         const logoBuf = await config.logoFile.arrayBuffer();
         logoImg = config.logoFile.type.includes('png') ? await doc.embedPng(logoBuf) : await doc.embedJpg(logoBuf);
       }
 
+      // Apply Overlays
       const pages = doc.getPages();
       pages.forEach((p, idx) => {
         const { width, height } = p.getSize();
@@ -303,8 +300,8 @@ export default function DigitrikPro() {
         }
       });
 
+      // ENCRYPTION
       if (!isPreview && config.encryptPdf && config.userPassword) {
-        // ENCRYPT IS GUARANTEED HERE BECAUSE WE LOADED THE FULL LIBRARY FROM CDN
         await doc.encrypt({
           userPassword: config.userPassword,
           ownerPassword: config.ownerPassword || config.userPassword,
@@ -331,6 +328,9 @@ export default function DigitrikPro() {
   useEffect(() => {
     let t;
     const updatePreview = async () => {
+      // Aspetta che la libreria sia caricata
+      if (!isSdkReady) return;
+      
       const pdfBytes = await generatePdf(true);
       if (pdfBytes) {
         const blob = new Blob([pdfBytes], { type: 'application/pdf' });
@@ -341,7 +341,7 @@ export default function DigitrikPro() {
     };
     t = setTimeout(updatePreview, 800);
     return () => clearTimeout(t);
-  }, [files, config, isPdfLibReady]);
+  }, [files, config, isSdkReady]);
 
   // LOGICA ESPORTAZIONE CORRETTA
   const handleExportClick = () => {
@@ -389,6 +389,13 @@ export default function DigitrikPro() {
 
   return (
     <div className="h-screen bg-zinc-950 text-zinc-100 font-sans flex overflow-hidden selection:bg-blue-500/30">
+      {/* CDN LOADER - CARICA PDF-LIB DALL'ESTERNO PER EVITARE TREE-SHAKING */}
+      <Script 
+        src="https://unpkg.com/pdf-lib@1.17.1/dist/pdf-lib.min.js" 
+        strategy="afterInteractive" 
+        onLoad={() => setIsSdkReady(true)}
+      />
+
       {/* MODAL */}
       {showRenameModal && (
         <div className="fixed inset-0 z-[100] flex items-center justify-center bg-black/80 backdrop-blur-sm transition-opacity duration-300">
@@ -630,14 +637,14 @@ export default function DigitrikPro() {
               <button key={c.id} onClick={() => setConfig({...config, compression: c.id})} className={`flex-1 flex items-center justify-center gap-2 py-2 rounded-md text-[10px] font-bold uppercase transition-all ${config.compression === c.id ? 'bg-zinc-800 text-white shadow-sm' : 'text-zinc-500 hover:text-zinc-300'}`}><c.i size={12} /> {c.l}</button>
             ))}
           </div>
-          {/* BOTTONE ESPORTA CON FEEDBACK DI CARICAMENTO */}
           <button 
             onClick={handleExportClick} 
-            disabled={!isPdfLibReady || isProcessing || files.length === 0} 
+            disabled={!isSdkReady || isProcessing || files.length === 0} 
             className="w-full py-4 bg-white text-black hover:bg-zinc-200 disabled:bg-zinc-800 disabled:text-zinc-600 rounded-xl font-black text-xs uppercase tracking-widest transition-all flex items-center justify-center gap-2 shadow-lg hover:shadow-xl hover:-translate-y-0.5 active:translate-y-0"
           >
-            {!isPdfLibReady ? (
-              <span className="flex items-center gap-2"><RefreshCcw className="animate-spin" size={16} /> Caricamento Core...</span>
+            {/* FEEDBACK VISIVO DELLO STATO DEL MOTORE PDF */}
+            {!isSdkReady ? (
+              <span className="flex items-center gap-2 text-zinc-500"><RefreshCcw className="animate-spin" size={16} /> Caricamento Core...</span>
             ) : isProcessing ? (
               <span className="flex items-center gap-2"><RefreshCcw className="animate-spin" size={16} /> Elaborazione...</span>
             ) : (
