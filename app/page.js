@@ -383,9 +383,9 @@ export default function DigitrikWorkstation() {
 
           <div className="relative">
             <select value={action} onChange={(e) => setAction(e.target.value)} className="w-full bg-[#111] border border-white/10 rounded-[1.5rem] p-5 appearance-none font-bold italic text-white text-sm focus:border-blue-600 outline-none">
-              <option value="conversione">'Converti in .pdf'</option>
-              <option value="unisci">'Unifica Pagine'</option>
-              <option value="estrai">'Estrai Pagine'</option>
+              <option value="conversione">'CONVERTI IN .pdf'</option>
+              <option value="unisci">'UNIFICA PAGINE'</option>
+              <option value="estrai">'ESTRAI PAGINE'</option>
             </select>
             <ChevronDown className="absolute right-5 top-1/2 -translate-y-1/2 text-gray-500 pointer-events-none" size={18} />
           </div>
