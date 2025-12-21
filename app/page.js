@@ -1,7 +1,7 @@
 'use client';
 
 import React, { useCallback, useState, useEffect } from 'react';
-import Script from 'next/script'; // ESSENZIALE PER EVITARE ERRORI DI BUILD SU VERCEL
+import Script from 'next/script'; 
 import { useDropzone } from 'react-dropzone';
 import { DragDropContext, Droppable, Draggable } from '@hello-pangea/dnd';
 import { 
@@ -112,7 +112,7 @@ export default function DigitrikPro() {
   const [trickCuriosity, setTrickCuriosity] = useState({ key: 'PDF', text: 'Il formato PDF è nato nel 1993.' });
   const [isPreviewOpen, setIsPreviewOpen] = useState(true);
 
-  // CONFIGURATION STATE
+  // CONFIGURATION STATE (Encryption Removed)
   const [config, setConfig] = useState({
     // Layout
     useHeader: false, headerText: '', headerAlign: 'left',
@@ -126,7 +126,6 @@ export default function DigitrikPro() {
     useLogo: false, logoFile: null, logoOpacity: 0.15, logoSize: 150,
     // Security
     ghostMode: false, metaTitle: '', metaAuthor: '',
-    encryptPdf: false, userPassword: '', ownerPassword: '',
     // Performance
     compression: 'balanced', action: 'conversione', extractRange: ''
   });
@@ -136,7 +135,6 @@ export default function DigitrikPro() {
 
   // --- CDN LOADER ---
   useEffect(() => {
-    // Se la libreria è già nel window (es. ricaricamento veloce), segna come pronta
     if (window.PDFLib) {
       setIsSdkReady(true);
     }
@@ -181,11 +179,6 @@ export default function DigitrikPro() {
     
     // ACCESS GLOBAL WINDOW OBJECT FROM CDN
     const { PDFDocument, StandardFonts, rgb, degrees } = window.PDFLib;
-
-    if (!isPreview && config.encryptPdf && !config.userPassword) {
-      showToast("Password mancante per la crittografia!", "error");
-      throw new Error("Password missing");
-    }
 
     try {
       const doc = await PDFDocument.create();
@@ -302,27 +295,10 @@ export default function DigitrikPro() {
         }
       });
 
-      // ENCRYPTION
-      if (!isPreview && config.encryptPdf && config.userPassword) {
-        await doc.encrypt({
-          userPassword: config.userPassword,
-          ownerPassword: config.ownerPassword || config.userPassword,
-          permissions: {
-            printing: 'highResolution',
-            modifying: false,
-            copying: false,
-            annotating: false,
-            fillingForms: false,
-            contentAccessibility: false,
-            documentAssembly: false,
-          },
-        });
-      }
-
       return await doc.save();
     } catch (e) {
       console.error(e);
-      if(!isPreview && e.message !== "Password missing") showToast("Errore: " + e.message, "error");
+      if(!isPreview) showToast("Errore: " + e.message, "error");
       return null;
     }
   };
@@ -348,11 +324,6 @@ export default function DigitrikPro() {
   const handleExportClick = () => {
     if (files.length === 0) {
       showToast("Nessun file da esportare!", "error");
-      return;
-    }
-    if (config.encryptPdf && !config.userPassword) {
-      showToast("Inserisci una password per criptare il file!", "error");
-      setActiveTab('security');
       return;
     }
     const keys = Object.keys(fileEncyclopedia);
@@ -443,7 +414,7 @@ export default function DigitrikPro() {
           <div className="h-6" />
           <SectionTitle icon={Shield} title="Security & Brand" />
           <NavItem id="watermark" icon={ImageIcon} label="Watermark & Logo" />
-          <NavItem id="security" icon={Lock} label="Vault & Ghost" />
+          <NavItem id="security" icon={Lock} label="Ghost Mode" />
         </nav>
         <div className={`mt-auto p-4 rounded-2xl border ${health.status === 'crit' ? 'bg-red-950/20 border-red-500/20' : 'bg-zinc-900 border-white/5'}`}>
           <div className="flex justify-between items-end mb-2"><span className="text-[10px] font-bold text-zinc-500 uppercase">System Health</span><span className={`text-xs font-black ${health.status === 'ok' ? 'text-green-500' : 'text-yellow-500'}`}>{health.score}%</span></div>
@@ -455,7 +426,7 @@ export default function DigitrikPro() {
       {/* CENTER */}
       <main className="flex-1 flex flex-col relative bg-zinc-900/50">
         <header className="h-16 border-b border-white/5 flex items-center justify-between px-8 bg-zinc-950/80 backdrop-blur-md sticky top-0 z-10">
-          <div className="flex items-center gap-4"><h2 className="text-sm font-bold text-zinc-300 uppercase tracking-wider">{activeTab === 'files' ? 'File Manager' : activeTab === 'layout' ? 'Layout Config' : activeTab === 'watermark' ? 'Branding' : 'Security Vault'}</h2></div>
+          <div className="flex items-center gap-4"><h2 className="text-sm font-bold text-zinc-300 uppercase tracking-wider">{activeTab === 'files' ? 'File Manager' : activeTab === 'layout' ? 'Layout Config' : activeTab === 'watermark' ? 'Branding' : 'Security'}</h2></div>
           <div className="flex items-center gap-3"><div className="text-[10px] font-bold text-zinc-500 uppercase px-3 py-1 bg-zinc-900 rounded-full border border-white/5">{files.length} File Caricati</div></div>
         </header>
         <div className="flex-1 overflow-y-auto p-8">
@@ -611,16 +582,6 @@ export default function DigitrikPro() {
                 </div>
                 <p className="text-[10px] text-zinc-500 leading-relaxed">Rimuove metadati, autore e data creazione per l'anonimato.</p>
               </div>
-              <div className="space-y-3">
-                <SectionTitle icon={Lock} title="Vault Encryption (AES-256)" />
-                <Toggle label="Cripta Documento" checked={config.encryptPdf} onChange={v => setConfig({...config, encryptPdf: v})} icon={Lock} />
-                {config.encryptPdf && (
-                  <div className="space-y-3 p-3 bg-zinc-900 rounded-xl border border-zinc-800 animate-in fade-in slide-in-from-top-2">
-                    <input type="password" placeholder="Password Utente (Obbligatoria)" value={config.userPassword} onChange={e => setConfig({...config, userPassword: e.target.value})} className="w-full bg-zinc-950 border border-zinc-700 rounded-lg p-2 text-xs text-white outline-none focus:border-blue-500 ring-1 ring-blue-500/20" />
-                    <input type="password" placeholder="Password Master (Opzionale)" value={config.ownerPassword} onChange={e => setConfig({...config, ownerPassword: e.target.value})} className="w-full bg-zinc-950 border border-zinc-700 rounded-lg p-2 text-xs text-white outline-none focus:border-blue-500" />
-                  </div>
-                )}
-              </div>
               {!config.ghostMode && (
                 <div className="space-y-3 pt-4 border-t border-white/5">
                   <SectionTitle icon={Tag} title="Metadati Pubblici" />
@@ -638,7 +599,6 @@ export default function DigitrikPro() {
               <button key={c.id} onClick={() => setConfig({...config, compression: c.id})} className={`flex-1 flex items-center justify-center gap-2 py-2 rounded-md text-[10px] font-bold uppercase transition-all ${config.compression === c.id ? 'bg-zinc-800 text-white shadow-sm' : 'text-zinc-500 hover:text-zinc-300'}`}><c.i size={12} /> {c.l}</button>
             ))}
           </div>
-          {/* BOTTONE ESPORTA CON FEEDBACK DI CARICAMENTO */}
           <button 
             onClick={handleExportClick} 
             disabled={!isSdkReady || isProcessing || files.length === 0} 
