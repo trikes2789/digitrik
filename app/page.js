@@ -1,7 +1,7 @@
 'use client';
 
 import React, { useCallback, useState, useEffect } from 'react';
-import Script from 'next/script'; 
+import Script from 'next/script'; // ESSENZIALE PER EVITARE ERRORI DI BUILD SU VERCEL
 import { useDropzone } from 'react-dropzone';
 import { DragDropContext, Droppable, Draggable } from '@hello-pangea/dnd';
 import { 
@@ -103,7 +103,7 @@ export default function DigitrikPro() {
   const [isProcessing, setIsProcessing] = useState(false);
   const [toast, setToast] = useState(null);
   
-  // SDK STATE
+  // SDK STATE (Load from CDN)
   const [isSdkReady, setIsSdkReady] = useState(false);
 
   // UI STATE
@@ -136,11 +136,10 @@ export default function DigitrikPro() {
 
   // --- CDN LOADER ---
   useEffect(() => {
+    // Se la libreria è già nel window (es. ricaricamento veloce), segna come pronta
     if (window.PDFLib) {
       setIsSdkReady(true);
-      return;
     }
-    // Nessuna azione qui, aspettiamo che lo Script di Next.js carichi
   }, []);
 
   useEffect(() => {
@@ -176,11 +175,11 @@ export default function DigitrikPro() {
   }, []);
   const { getRootProps: getLogoProps, getInputProps: getLogoInput } = useDropzone({ onDrop: onLogoDrop, accept: {'image/*': []}, multiple: false });
 
-  // --- LOGIC: PDF ENGINE ---
+  // --- LOGIC: PDF ENGINE (PURE WINDOW ACCESS) ---
   const generatePdf = async (isPreview = false) => {
     if (files.length === 0 || !window.PDFLib) return null;
     
-    // ACCESS GLOBAL WINDOW OBJECT
+    // ACCESS GLOBAL WINDOW OBJECT FROM CDN
     const { PDFDocument, StandardFonts, rgb, degrees } = window.PDFLib;
 
     if (!isPreview && config.encryptPdf && !config.userPassword) {
@@ -331,8 +330,8 @@ export default function DigitrikPro() {
   useEffect(() => {
     let t;
     const updatePreview = async () => {
-      // Check if SDK loaded
-      if (!window.PDFLib) return;
+      // Aspetta che la libreria sia pronta
+      if (!isSdkReady || !window.PDFLib) return;
 
       const pdfBytes = await generatePdf(true);
       if (pdfBytes) {
@@ -344,7 +343,7 @@ export default function DigitrikPro() {
     };
     t = setTimeout(updatePreview, 800);
     return () => clearTimeout(t);
-  }, [files, config, isSdkReady]); // Rerun when isSdkReady changes
+  }, [files, config, isSdkReady]); // Rerun when SDK is ready
 
   const handleExportClick = () => {
     if (files.length === 0) {
@@ -391,7 +390,7 @@ export default function DigitrikPro() {
 
   return (
     <div className="h-screen bg-zinc-950 text-zinc-100 font-sans flex overflow-hidden selection:bg-blue-500/30">
-      {/* CDN LOADER - THE FIX */}
+      {/* CDN LOADER */}
       <Script 
         src="https://unpkg.com/pdf-lib@1.17.1/dist/pdf-lib.min.js" 
         strategy="afterInteractive" 
