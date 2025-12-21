@@ -10,47 +10,112 @@ import {
   ChevronRight, Sparkles 
 } from 'lucide-react';
 
-// --- DATABASE ENCICLOPEDIA (Ordinato Alfabeticamente) ---
+// --- DATABASE ENCICLOPEDIA COMPLETO ---
 const fileEncyclopedia = {
   "AI (Adobe Illustrator)": {
-    desc: "Il formato AI è un tipo di file vettoriale proprietario sviluppato da Adobe. A differenza delle immagini raster (composte da pixel), i file AI si basano su percorsi matematici definiti da punti. Questo permette di ridimensionare il contenuto all'infinito senza alcuna perdita di qualità o 'sgranatura', rendendolo lo standard per la creazione di loghi e illustrazioni professionali che devono essere stampate su superfici di ogni dimensione.",
-    curiosity: "Sapevi che internamente un file AI è basato su una versione semplificata del formato PDF? Infatti, se salvato con l'opzione 'Compatibilità PDF', puoi spesso visualizzarne l'anteprima anche senza avere Illustrator installato.",
+    desc: "Il formato AI è un tipo di file vettoriale proprietario sviluppato da Adobe. A differenza delle immagini composte da pixel, i file AI si basano su percorsi matematici definiti da punti. Questo permette di ridimensionare il contenuto all'infinito senza alcuna perdita di qualità, rendendolo lo standard per la creazione di loghi professionali che devono essere stampati su superfici di ogni dimensione.",
+    curiosity: "Sapevi che internamente un file AI è basato su una versione semplificata del formato PDF? Infatti, se salvato correttamente, puoi spesso visualizzarne l'anteprima anche senza avere Illustrator installato.",
     type: "Immagine Vettoriale"
   },
+  "BMP (Bitmap Image)": {
+    desc: "Il Bitmap (BMP) è uno dei formati grafici più puri e datati. A differenza dei formati compressi, il BMP memorizza i dati dei pixel in modo diretto e non compresso, garantendo una fedeltà assoluta ma generando file dalle dimensioni mastodontiche. È il linguaggio nativo di Windows per la grafica semplice sin dagli albori del sistema operativo.",
+    curiosity: "Negli anni '90, i file BMP erano l'incubo dei floppy disk: una sola immagine ad alta risoluzione poteva occupare più spazio di un intero pacchetto software a causa della totale assenza di compressione.",
+    type: "Immagine Raster"
+  },
   "CSV (Comma Separated Values)": {
-    desc: "Il CSV è uno dei formati di dati più vecchi e resistenti della storia dell'informatica. Si tratta di un file di puro testo dove ogni riga rappresenta un record e i dati sono separati da una virgola (o punto e virgola). È il ponte universale che permette di spostare database enormi tra software completamente diversi, come Excel, database SQL e sistemi di analisi dati complessi, grazie alla sua struttura priva di formattazione pesante.",
-    curiosity: "Nonostante sembri un formato 'moderno' per i fogli di calcolo, le sue origini risalgono al 1972, ben prima della nascita dei PC IBM, rendendolo un vero sopravvissuto dell'era dei mainframe.",
+    desc: "Il CSV è il ponte universale dei dati. Si tratta di un file di puro testo dove ogni riga rappresenta un record e i dati sono separati da una virgola. È il formato preferito dai data scientist perché permette di spostare database enormi tra software diversi come Excel, database SQL e sistemi di analisi complessi in modo ultra-veloce.",
+    curiosity: "Nonostante sembri un formato moderno, le sue origini risalgono al 1972, ben prima della nascita dei PC IBM, rendendolo uno dei formati più longevi e resistenti della storia dell'informatica.",
     type: "Documento Dati"
   },
-  "DOCX (Microsoft Word)": {
-    desc: "Il DOCX è l'evoluzione del vecchio formato DOC, introdotto da Microsoft nel 2007. La 'X' finale sta per XML, indicando che il file non è un blocco di dati binari leggibili solo da Word, ma un archivio compresso di file testuali e grafici strutturati. Questo approccio rende i documenti molto più leggeri, meno soggetti a corruzione dei dati e più facili da aprire per software di terze parti rispetto ai formati del secolo scorso.",
-    curiosity: "Se provi a rinominare un file .docx cambiando l'estensione in .zip, potrai aprirlo come una normale cartella e navigare tra le immagini e il testo contenuti al suo interno in formato XML.",
+  "DOC / DOCX (Microsoft Word)": {
+    desc: "Il DOCX è l'evoluzione del vecchio formato DOC, introdotto nel 2007. La 'X' finale sta per XML, indicando che il file è in realtà un archivio compresso di file testuali e grafici strutturati. Questo approccio rende i documenti più leggeri, meno soggetti a corruzione dei dati e più facili da aprire per software di terze parti.",
+    curiosity: "Se provi a rinominare un file .docx cambiando l'estensione in .zip, potrai aprirlo come una normale cartella e navigare tra le immagini e il testo XML contenuti al suo interno.",
     type: "Documento di Testo"
   },
+  "EPS (Encapsulated PostScript)": {
+    desc: "L'EPS è il pilastro dell'industria della stampa professionale. È un formato vettoriale che contiene istruzioni matematiche per descrivere immagini e testi, garantendo una precisione millimetrica nelle macchine tipografiche ad alta definizione. È stato per decenni lo standard per l'invio di grafica pronta per la stampa.",
+    curiosity: "Sebbene sia un formato vettoriale, un file EPS può contenere al suo interno anche un'anteprima in bassa risoluzione per permettere ai vecchi computer di visualizzarlo senza dover processare complessi calcoli matematici.",
+    type: "Vettoriale Professionale"
+  },
+  "EPUB (Electronic Publication)": {
+    desc: "L'EPUB è lo standard aperto per gli eBook. La sua caratteristica principale è il layout 'refluibile': il testo si adatta automaticamente allo schermo del dispositivo, permettendo di cambiare font e dimensioni senza rompere l'impaginazione. È il formato più diffuso al mondo per la lettura digitale su e-reader.",
+    curiosity: "Un file EPUB è tecnicamente un piccolo sito web compresso; dentro ci sono file HTML, CSS e immagini che il tuo lettore interpreta esattamente come farebbe un browser internet offline.",
+    type: "Libro Digitale"
+  },
+  "GIF (Graphics Interchange Format)": {
+    desc: "Il GIF è una reliquia degli albori del web che non accenna a sparire. Supporta un massimo di 256 colori e la trasparenza binaria. La sua fama mondiale è dovuta alla capacità di memorizzare brevi sequenze animate in loop continuo senza la necessità di un lettore video dedicato.",
+    curiosity: "L'inventore del formato, Steve Wilhite, ha dichiarato ufficialmente che la pronuncia corretta è 'Jif' (come il burro d'arachidi), scatenando una guerra linguistica su internet che dura da oltre 30 anni.",
+    type: "Immagine Animata"
+  },
   "HEIC (High Efficiency Image)": {
-    desc: "Il formato HEIC è stato adottato da Apple come standard per iPhone per risolvere il problema dello spazio di archiviazione. Utilizza una compressione molto più avanzata rispetto al vecchio JPG, permettendo di mantenere una fedeltà cromatica a 16 bit (contro gli 8 del JPG) in file che occupano circa la metà dello spazio. È ideale per la fotografia mobile moderna dove la qualità dei sensori supera la capacità di gestione dei vecchi formati.",
-    curiosity: "HEIC non è solo un formato d'immagine, ma un 'contenitore'. Può memorizzare intere sequenze di foto, motivo per cui viene usato per le 'Live Photos' che si animano quando le tocchi sullo schermo.",
+    desc: "Adottato da Apple per risolvere il problema dello spazio su iPhone, l'HEIC usa una compressione molto avanzata. Permette di mantenere una fedeltà cromatica a 16 bit in file che occupano la metà dello spazio di un JPG. È ideale per la fotografia mobile dove la qualità dei sensori supera i vecchi formati.",
+    curiosity: "HEIC non è solo un'immagine, ma un 'contenitore'. Può memorizzare intere sequenze di foto, motivo per cui viene usato per le 'Live Photos' che si animano quando le tocchi sullo schermo dello smartphone.",
     type: "Immagine Moderna"
   },
+  "JPG / JPEG (Joint Photographic)": {
+    desc: "Il JPG è il formato fotografico più usato al mondo. Utilizza una compressione 'lossy', scartando le informazioni visive che l'occhio umano fatica a percepire per ridurre il peso del file. È il compromesso perfetto tra qualità visiva e spazio occupato, standard per web e social media.",
+    curiosity: "Ogni volta che salvi e risalvi un file JPG, l'algoritmo ricomprime l'immagine causando una perdita progressiva di dettaglio. È un fenomeno noto come 'marciume digitale' o generazione degradata.",
+    type: "Immagine Standard"
+  },
+  "ODT (OpenDocument Text)": {
+    desc: "L'ODT è l'alternativa libera e open-source ai formati proprietari. È nato per garantire che i documenti creati oggi siano leggibili tra 100 anni, indipendentemente dal software utilizzato. È uno standard ISO che protegge i dati dal controllo di singole aziende private.",
+    curiosity: "Il formato ODT è obbligatorio in molti governi europei per legge, al fine di evitare che la pubblica amministrazione sia vincolata all'acquisto perpetuo di licenze software specifiche.",
+    type: "Documento Libero"
+  },
   "PDF (Portable Document Format)": {
-    desc: "Creato da Adobe nel 1993, il PDF nasce con l'obiettivo di creare un documento che appaia esattamente identico su qualsiasi dispositivo, indipendentemente dal sistema operativo o dai font installati. Incapsula al suo interno testi, immagini e grafica vettoriale in un layout fisso. È diventato lo standard de facto per la pubblica amministrazione, l'editoria e i contratti legali grazie alla sua natura non modificabile accidentalmente.",
-    curiosity: "Nei primi anni '90, il software per visualizzare i PDF costava ben 50 dollari. Fu solo quando Adobe decise di rendere Acrobat Reader gratuito che il PDF sconfisse i formati concorrenti diventando lo standard mondiale.",
+    desc: "Creato da Adobe nel 1993, il PDF nasce per apparire identico su qualsiasi dispositivo. Incapsula testi, immagini e grafica vettoriale in un layout fisso. È diventato lo standard mondiale per la pubblica amministrazione e i contratti legali grazie alla sua natura non modificabile accidentalmente.",
+    curiosity: "Nei primi anni '90, il software per visualizzare i PDF costava 50 dollari. Solo quando Adobe decise di rendere Acrobat Reader gratuito, il PDF sconfisse i formati concorrenti diventando lo standard mondiale.",
     type: "Documento Universale"
   },
   "PNG (Portable Network Graphics)": {
-    desc: "Il PNG è nato come un miglioramento del formato GIF, progettato specificamente per il trasferimento di immagini sul web. Il suo punto di forza è la compressione 'lossless' (senza perdita di qualità) e il supporto alla trasparenza alfa, che permette di avere sfondi trasparenti con bordi sfumati perfettamente. È il formato preferito per screenshot, loghi web e icone dove la precisione dei pixel è fondamentale.",
-    curiosity: "Il formato PNG è stato creato in fretta e furia nel 1995 perché si scoprì che il formato GIF utilizzava un algoritmo di compressione coperto da brevetto, e i proprietari iniziarono a chiedere royalty.",
-    type: "Immagine Raster"
+    desc: "Il PNG è nato per migliorare il formato GIF nel trasferimento di immagini sul web. Il suo punto di forza è la compressione senza perdita di qualità e il supporto alla trasparenza alfa, che permette bordi sfumati perfetti su qualsiasi sfondo. È essenziale per loghi web e icone di sistema.",
+    curiosity: "Il formato PNG è stato creato d'urgenza nel 1995 perché il formato GIF utilizzava un algoritmo coperto da brevetto, e i proprietari iniziarono a chiedere royalty a chiunque lo usasse online.",
+    type: "Immagine Trasparente"
+  },
+  "PPT / PPTX (PowerPoint)": {
+    desc: "Il formato PPTX è lo standard per le presentazioni multimediali. Basato su architettura XML, organizza slide, animazioni e grafici. È progettato per gestire flussi di lavoro collaborativi e complessi contenuti visivi, permettendo l'integrazione di video e audio in un unico pacchetto.",
+    curiosity: "Prima che diventasse un gigante, il programma si chiamava 'Presenter'. Microsoft lo acquistò nel 1987 per soli 14 milioni di dollari, uno degli affari più redditizi della storia del software mondiale.",
+    type: "Presentazione"
+  },
+  "PSD (Adobe Photoshop)": {
+    desc: "Il PSD è il formato di lavoro preferito dai designer. La sua magia risiede nella gestione dei livelli (layers), che permette di modificare ogni singolo elemento dell'immagine separatamente. Supporta maschere, canali alfa e oggetti avanzati con una profondità di bit elevatissima per il fotoritocco.",
+    curiosity: "Un singolo file PSD può superare i 2 Gigabyte. Per file ancora più grandi, esiste il formato PSB (Photoshop Big), capace di supportare immagini fino a 300.000 pixel per lato.",
+    type: "Progetto Grafico"
+  },
+  "RAW (Digital Negative)": {
+    desc: "Il formato RAW è il negativo digitale della fotografia professionale. Contiene tutti i dati non elaborati catturati dal sensore della fotocamera. Non è un'immagine 'finita', ma un insieme di istruzioni che devono essere sviluppate via software per ottenere il massimo della gamma dinamica.",
+    curiosity: "Poiché i dati RAW non vengono elaborati dalla fotocamera, puoi cambiare il bilanciamento del bianco di una foto dopo averla scattata senza perdere qualità, come se tornassi indietro nel tempo al momento dello scatto.",
+    type: "Dati Sensore"
+  },
+  "RTF (Rich Text Format)": {
+    desc: "L'RTF è stato creato da Microsoft nel 1987 come formato universale. Offre formattazione base (grassetto, font, tabelle) ma rimane leggibile da quasi ogni editor di testo esistente. È molto più leggero e sicuro di un documento Word moderno, ideale per lo scambio rapido di testi formattati.",
+    curiosity: "Nonostante l'età, l'RTF è considerato estremamente sicuro perché non può contenere macro o virus eseguibili, rendendolo un formato preferito in ambienti dove la sicurezza informatica è prioritaria.",
+    type: "Testo Formattato"
   },
   "SVG (Scalable Vector Graphics)": {
-    desc: "L'SVG è il linguaggio vettoriale del web. A differenza degli altri formati d'immagine, l'SVG è scritto in codice XML. Questo significa che l'immagine può essere letta dai motori di ricerca, modificata tramite CSS o animata con JavaScript. Essendo vettoriale, rimane perfettamente nitido su schermi Retina e 4K, indipendentemente da quanto lo si ingrandisca, rendendolo essenziale per il design di siti web responsivi.",
-    curiosity: "Poiché è tecnicamente 'testo', puoi aprire un file SVG con il Blocco Note, cambiare una coordinata o un colore scrivendo a mano, e l'immagine cambierà magicamente quando la riaprirai nel browser.",
+    desc: "L'SVG è il linguaggio vettoriale del web moderno. A differenza di altri formati, l'SVG è scritto in codice XML. Questo significa che l'immagine può essere letta dai motori di ricerca e animata con codice. Rimane perfettamente nitido su schermi 4K indipendentemente da quanto lo si ingrandisca.",
+    curiosity: "Poiché è tecnicamente 'testo', puoi aprire un file SVG con il Blocco Note, cambiare un colore scrivendo il codice a mano, e l'immagine cambierà istantaneamente quando la riaprirai nel browser.",
     type: "Immagine Web Vettoriale"
   },
+  "TIFF (Tagged Image File)": {
+    desc: "Il TIFF è il cavallo di battaglia dell'industria della stampa e dell'archiviazione digitale. Supporta la compressione senza perdita e spazi colore complessi. È il formato scelto dai musei per scansionare opere d'arte che devono essere preservate in altissima qualità per l'eternità.",
+    curiosity: "Un file TIFF può contenere più pagine al suo interno. Questa funzione veniva usata massicciamente dai vecchi fax digitali per inviare documenti di più fogli in un unico invio telefonico.",
+    type: "Archiviazione Qualità"
+  },
+  "TXT (Plain Text)": {
+    desc: "Il TXT è la base atomica dell'informatica. Non contiene formattazione, né stili, né immagini: solo caratteri puri. È il formato più leggero e duraturo mai creato, leggibile da qualsiasi dispositivo, dal più moderno smartphone al computer di una vecchia sonda spaziale.",
+    curiosity: "Tutto il codice sorgente di internet e delle app che usi ogni giorno è scritto originariamente in semplici file .txt prima di essere 'tradotto' dai processori in software funzionante.",
+    type: "Testo Puro"
+  },
   "WEBP (Google Web Picture)": {
-    desc: "Sviluppato da Google, il WebP è il formato definitivo per la velocità dei siti web moderni. Combina le migliori caratteristiche di JPG (compressione fotografica) e PNG (trasparenza), ma con file che sono mediamente il 30% più leggeri. Supporta sia la compressione con perdita che quella senza perdita, oltre alle animazioni, puntando a sostituire tutti i vecchi formati grafici della rete in un colpo solo.",
-    curiosity: "Anche se sembra un formato nuovo, WebP si basa sulla tecnologia di compressione video VP8. In pratica, un'immagine WebP è come un singolo fotogramma di un video ad alta definizione.",
+    desc: "Sviluppato da Google, il WebP è il formato definitivo per la velocità dei siti web. Combina il meglio di JPG e PNG, ma con file che sono mediamente il 30% più leggeri. Supporta trasparenza e animazioni, puntando a sostituire tutti i vecchi formati grafici della rete.",
+    curiosity: "Anche se sembra un formato nuovo, WebP si basa sulla tecnologia di compressione video VP8. In pratica, un'immagine WebP è come un singolo fotogramma di un video ad alta definizione ottimizzato.",
     type: "Immagine Web"
+  },
+  "XLS / XLSX (Microsoft Excel)": {
+    desc: "L'XLSX è il re dei fogli di calcolo. È in grado di gestire milioni di righe di calcoli, tabelle pivot e macro complesse. La sua struttura XML lo rende robusto e capace di integrarsi con sistemi esterni di contabilità e analisi finanziaria professionale in tempo reale.",
+    curiosity: "Fino alla versione 2003, Excel aveva un limite di 65.536 righe. Con il passaggio al formato .xlsx, il limite è esploso a oltre 1 milione di righe per ogni singolo foglio di lavoro.",
+    type: "Foglio di Calcolo"
   }
 };
 
