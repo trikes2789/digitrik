@@ -7,14 +7,61 @@ import { DragDropContext, Droppable, Draggable } from '@hello-pangea/dnd';
 import { 
   FileText, Plus, Trash2, RefreshCcw, ChevronDown, Wand2, GripVertical, 
   ImageIcon, Eye, AlignLeft, AlignCenter, AlignRight, ChevronUp, 
-  ChevronRight 
+  ChevronRight, Sparkles 
 } from 'lucide-react';
+
+// --- DATABASE ENCICLOPEDIA (Ordinato Alfabeticamente) ---
+const fileEncyclopedia = {
+  "AI (Adobe Illustrator)": {
+    desc: "Il formato AI è un tipo di file vettoriale proprietario sviluppato da Adobe. A differenza delle immagini raster (composte da pixel), i file AI si basano su percorsi matematici definiti da punti. Questo permette di ridimensionare il contenuto all'infinito senza alcuna perdita di qualità o 'sgranatura', rendendolo lo standard per la creazione di loghi e illustrazioni professionali che devono essere stampate su superfici di ogni dimensione.",
+    curiosity: "Sapevi che internamente un file AI è basato su una versione semplificata del formato PDF? Infatti, se salvato con l'opzione 'Compatibilità PDF', puoi spesso visualizzarne l'anteprima anche senza avere Illustrator installato.",
+    type: "Immagine Vettoriale"
+  },
+  "CSV (Comma Separated Values)": {
+    desc: "Il CSV è uno dei formati di dati più vecchi e resistenti della storia dell'informatica. Si tratta di un file di puro testo dove ogni riga rappresenta un record e i dati sono separati da una virgola (o punto e virgola). È il ponte universale che permette di spostare database enormi tra software completamente diversi, come Excel, database SQL e sistemi di analisi dati complessi, grazie alla sua struttura priva di formattazione pesante.",
+    curiosity: "Nonostante sembri un formato 'moderno' per i fogli di calcolo, le sue origini risalgono al 1972, ben prima della nascita dei PC IBM, rendendolo un vero sopravvissuto dell'era dei mainframe.",
+    type: "Documento Dati"
+  },
+  "DOCX (Microsoft Word)": {
+    desc: "Il DOCX è l'evoluzione del vecchio formato DOC, introdotto da Microsoft nel 2007. La 'X' finale sta per XML, indicando che il file non è un blocco di dati binari leggibili solo da Word, ma un archivio compresso di file testuali e grafici strutturati. Questo approccio rende i documenti molto più leggeri, meno soggetti a corruzione dei dati e più facili da aprire per software di terze parti rispetto ai formati del secolo scorso.",
+    curiosity: "Se provi a rinominare un file .docx cambiando l'estensione in .zip, potrai aprirlo come una normale cartella e navigare tra le immagini e il testo contenuti al suo interno in formato XML.",
+    type: "Documento di Testo"
+  },
+  "HEIC (High Efficiency Image)": {
+    desc: "Il formato HEIC è stato adottato da Apple come standard per iPhone per risolvere il problema dello spazio di archiviazione. Utilizza una compressione molto più avanzata rispetto al vecchio JPG, permettendo di mantenere una fedeltà cromatica a 16 bit (contro gli 8 del JPG) in file che occupano circa la metà dello spazio. È ideale per la fotografia mobile moderna dove la qualità dei sensori supera la capacità di gestione dei vecchi formati.",
+    curiosity: "HEIC non è solo un formato d'immagine, ma un 'contenitore'. Può memorizzare intere sequenze di foto, motivo per cui viene usato per le 'Live Photos' che si animano quando le tocchi sullo schermo.",
+    type: "Immagine Moderna"
+  },
+  "PDF (Portable Document Format)": {
+    desc: "Creato da Adobe nel 1993, il PDF nasce con l'obiettivo di creare un documento che appaia esattamente identico su qualsiasi dispositivo, indipendentemente dal sistema operativo o dai font installati. Incapsula al suo interno testi, immagini e grafica vettoriale in un layout fisso. È diventato lo standard de facto per la pubblica amministrazione, l'editoria e i contratti legali grazie alla sua natura non modificabile accidentalmente.",
+    curiosity: "Nei primi anni '90, il software per visualizzare i PDF costava ben 50 dollari. Fu solo quando Adobe decise di rendere Acrobat Reader gratuito che il PDF sconfisse i formati concorrenti diventando lo standard mondiale.",
+    type: "Documento Universale"
+  },
+  "PNG (Portable Network Graphics)": {
+    desc: "Il PNG è nato come un miglioramento del formato GIF, progettato specificamente per il trasferimento di immagini sul web. Il suo punto di forza è la compressione 'lossless' (senza perdita di qualità) e il supporto alla trasparenza alfa, che permette di avere sfondi trasparenti con bordi sfumati perfettamente. È il formato preferito per screenshot, loghi web e icone dove la precisione dei pixel è fondamentale.",
+    curiosity: "Il formato PNG è stato creato in fretta e furia nel 1995 perché si scoprì che il formato GIF utilizzava un algoritmo di compressione coperto da brevetto, e i proprietari iniziarono a chiedere royalty.",
+    type: "Immagine Raster"
+  },
+  "SVG (Scalable Vector Graphics)": {
+    desc: "L'SVG è il linguaggio vettoriale del web. A differenza degli altri formati d'immagine, l'SVG è scritto in codice XML. Questo significa che l'immagine può essere letta dai motori di ricerca, modificata tramite CSS o animata con JavaScript. Essendo vettoriale, rimane perfettamente nitido su schermi Retina e 4K, indipendentemente da quanto lo si ingrandisca, rendendolo essenziale per il design di siti web responsivi.",
+    curiosity: "Poiché è tecnicamente 'testo', puoi aprire un file SVG con il Blocco Note, cambiare una coordinata o un colore scrivendo a mano, e l'immagine cambierà magicamente quando la riaprirai nel browser.",
+    type: "Immagine Web Vettoriale"
+  },
+  "WEBP (Google Web Picture)": {
+    desc: "Sviluppato da Google, il WebP è il formato definitivo per la velocità dei siti web moderni. Combina le migliori caratteristiche di JPG (compressione fotografica) e PNG (trasparenza), ma con file che sono mediamente il 30% più leggeri. Supporta sia la compressione con perdita che quella senza perdita, oltre alle animazioni, puntando a sostituire tutti i vecchi formati grafici della rete in un colpo solo.",
+    curiosity: "Anche se sembra un formato nuovo, WebP si basa sulla tecnologia di compressione video VP8. In pratica, un'immagine WebP è come un singolo fotogramma di un video ad alta definizione.",
+    type: "Immagine Web"
+  }
+};
 
 export default function DigitrikWorkstation() {
   const [files, setFiles] = useState([]);
   const [action, setAction] = useState('conversione'); 
   const [isProcessing, setIsProcessing] = useState(false);
   const [previewUrl, setPreviewUrl] = useState(null);
+
+  // --- STATO ENCICLOPEDIA ---
+  const [selectedInfo, setSelectedInfo] = useState(null);
 
   // --- STATI PER MENU A SCOMPARSA ---
   const [isLayoutOpen, setIsLayoutOpen] = useState(false);
@@ -306,11 +353,13 @@ export default function DigitrikWorkstation() {
               </div>
             </div>
           )}
+          
           <div {...getRootProps()} className={`border-2 border-dashed rounded-[2rem] p-12 text-center cursor-pointer transition-all ${isDragActive ? 'border-blue-600 bg-blue-600/5' : 'border-white/10 hover:bg-white/[0.02]'}`}>
             <input {...getInputProps()} />
             <Plus className="mx-auto mb-4 text-gray-700" size={32} />
             <p className="font-bold italic text-gray-500 text-sm">Trascina qui i tuoi file</p>
           </div>
+
           <DragDropContext onDragEnd={onDragEnd}>
             <Droppable droppableId="files-list">
               {(provided) => (
@@ -335,6 +384,55 @@ export default function DigitrikWorkstation() {
               )}
             </Droppable>
           </DragDropContext>
+
+          {/* --- ENCICLOPEDIA DEI FILE --- */}
+          <div className="mt-12 p-10 bg-[#0a0a0a] border border-white/5 rounded-[3rem] space-y-8">
+            <div className="flex flex-col gap-2">
+              <span className="text-blue-500 font-black italic text-[10px] uppercase tracking-[0.4em] ml-1">Database Digitrik</span>
+              <h2 className="text-3xl font-black text-white uppercase italic tracking-tighter">Enciclopedia dei File</h2>
+            </div>
+
+            <div className="relative">
+              <select 
+                onChange={(e) => setSelectedInfo(fileEncyclopedia[e.target.value])}
+                className="w-full bg-[#111] border border-white/10 rounded-2xl p-5 appearance-none font-bold text-gray-300 focus:border-blue-600 outline-none cursor-pointer uppercase text-xs tracking-widest italic"
+              >
+                <option value="">Seleziona un formato per la consultazione...</option>
+                {Object.keys(fileEncyclopedia).sort().map(name => (
+                  <option key={name} value={name}>{name}</option>
+                ))}
+              </select>
+              <ChevronDown className="absolute right-6 top-1/2 -translate-y-1/2 text-blue-600 pointer-events-none" size={20} />
+            </div>
+
+            {selectedInfo && (
+              <div className="bg-blue-600/[0.03] border border-blue-600/20 rounded-[2rem] p-8 animate-in fade-in zoom-in duration-500">
+                <div className="flex justify-between items-center mb-6">
+                  <span className="bg-blue-600 text-white text-[9px] font-black px-3 py-1.5 rounded-full uppercase tracking-widest italic">Info di Sistema</span>
+                  <div className="flex items-center gap-2 text-[9px] text-gray-500 font-black uppercase tracking-widest">
+                    <RefreshCcw size={12} className="text-blue-500" /> Tempo di lettura stimato: 25s
+                  </div>
+                </div>
+                
+                <div className="space-y-6">
+                  <div>
+                    <span className="text-[10px] font-black text-gray-500 uppercase tracking-widest block mb-2">Protocollo: {selectedInfo.type}</span>
+                    <p className="text-gray-300 text-sm leading-relaxed font-medium italic">
+                      {selectedInfo.desc}
+                    </p>
+                  </div>
+                  
+                  <div className="flex gap-4 items-start bg-black/60 p-6 rounded-2xl border border-white/5 shadow-inner">
+                    <Sparkles className="text-blue-500 shrink-0 mt-1" size={20} />
+                    <div>
+                      <span className="text-[10px] font-black text-blue-500 uppercase italic block mb-1">Curiosità Matrix:</span>
+                      <p className="text-xs text-gray-400 italic font-bold leading-relaxed">{selectedInfo.curiosity}</p>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            )}
+          </div>
         </div>
 
         <div className="col-span-4 bg-[#0a0a0a] p-8 space-y-6 relative overflow-y-auto max-h-screen">
