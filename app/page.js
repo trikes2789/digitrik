@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useCallback, useState, useEffect } from 'react';
+import React, { useCallback, useState, useEffect, useRef } from 'react';
 import { useDropzone } from 'react-dropzone';
 import { PDFDocument, rgb, degrees, StandardFonts } from 'pdf-lib';
 import { DragDropContext, Droppable, Draggable } from '@hello-pangea/dnd';
@@ -9,6 +9,26 @@ import {
   ImageIcon, Eye, EyeOff, AlignLeft, AlignCenter, AlignRight, ChevronUp, Sparkles, X, Check, RotateCw, Tag, 
   Activity, ShieldAlert, Feather, Layers, Printer, Ghost, Lock
 } from 'lucide-react';
+
+// --- HOOK: USE CLICK OUTSIDE ---
+// Chiude il menu se si clicca fuori dall'elemento di riferimento
+function useClickOutside(ref, handler) {
+  useEffect(() => {
+    const listener = (event) => {
+      // Non fare nulla se il ref non esiste o se il click è dentro l'elemento
+      if (!ref.current || ref.current.contains(event.target)) {
+        return;
+      }
+      handler(event);
+    };
+    document.addEventListener("mousedown", listener);
+    document.addEventListener("touchstart", listener);
+    return () => {
+      document.removeEventListener("mousedown", listener);
+      document.removeEventListener("touchstart", listener);
+    };
+  }, [ref, handler]);
+}
 
 // --- DATABASE: FILE ENCYCLOPEDIA ---
 const fileEncyclopedia = {
@@ -78,15 +98,25 @@ export default function DigitrikWorkstation() {
   const [selectedInfo, setSelectedInfo] = useState(null);
   
   // UI Toggles
-  const [isPreviewOpen, setIsPreviewOpen] = useState(true); // Toggle Anteprima
+  const [isPreviewOpen, setIsPreviewOpen] = useState(true); 
   const [showRenameModal, setShowRenameModal] = useState(false);
   const [tempFilename, setTempFilename] = useState("Digitrik_Result");
   const [trickCuriosity, setTrickCuriosity] = useState({ key: '', text: '' });
 
   // Menu Toggles (Sidebar Destra)
   const [isLayoutOpen, setIsLayoutOpen] = useState(false);
-  const [isGhostMenuOpen, setIsGhostMenuOpen] = useState(false); // Nuovo menu Ghost
+  const [isGhostMenuOpen, setIsGhostMenuOpen] = useState(false); 
   const [isMatrixOpen, setIsMatrixOpen] = useState(false);
+
+  // REFS PER CLICK OUTSIDE
+  const layoutRef = useRef(null);
+  const ghostRef = useRef(null);
+  const matrixRef = useRef(null);
+
+  // ATTIVAZIONE HOOK CLICK OUTSIDE
+  useClickOutside(layoutRef, () => setIsLayoutOpen(false));
+  useClickOutside(ghostRef, () => setIsGhostMenuOpen(false));
+  useClickOutside(matrixRef, () => setIsMatrixOpen(false));
 
   // Layout State
   const [useHeader, setUseHeader] = useState(false);
@@ -174,7 +204,7 @@ export default function DigitrikWorkstation() {
 
   // --- PREVIEW GENERATOR ---
   const generatePreview = useCallback(async () => {
-    // Generiamo la preview anche se il pannello è chiuso, così è pronta quando l'utente apre
+    // Generiamo la preview anche se il pannello è chiuso
     if (files.length === 0) { setPreviewUrl(null); return; }
     try {
       const firstFile = files[0].file;
@@ -338,18 +368,17 @@ export default function DigitrikWorkstation() {
       const fontMono = await mergedPdf.embedFont(StandardFonts.Courier);
 
       for (const f of files) {
-        // COMPRESSION LOGIC (ONLY FOR NEW IMAGES)
+        // COMPRESSION LOGIC
         let arrayBuffer;
         if (f.file.type.startsWith('image/')) {
-           // Smart Compression per immagini
            if (compressionProfile === 'web') {
-             const blob = await compressImage(f.file, 0.6, 0.6); // 60% quality, 60% scale
+             const blob = await compressImage(f.file, 0.6, 0.6); 
              arrayBuffer = await blob.arrayBuffer();
            } else if (compressionProfile === 'balanced') {
-             const blob = await compressImage(f.file, 0.8, 0.8); // 80% quality, 80% scale
+             const blob = await compressImage(f.file, 0.8, 0.8); 
              arrayBuffer = await blob.arrayBuffer();
            } else {
-             arrayBuffer = await f.file.arrayBuffer(); // Original
+             arrayBuffer = await f.file.arrayBuffer(); 
            }
         } else {
            arrayBuffer = await f.file.arrayBuffer();
@@ -383,7 +412,6 @@ export default function DigitrikWorkstation() {
         } else if (f.file.type.startsWith('image/')) {
           const page = mergedPdf.addPage();
           const { width, height } = page.getSize();
-          // Embed always as JPG if compressed to ensure size reduction
           let image;
           try {
              image = await mergedPdf.embedJpg(arrayBuffer);
@@ -624,7 +652,7 @@ export default function DigitrikWorkstation() {
           </div>
 
           {/* MENU 1: LAYOUT TOOLS */}
-          <div className="bg-[#111] rounded-2xl border border-white/5 overflow-hidden">
+          <div ref={layoutRef} className="bg-[#111] rounded-2xl border border-white/5 overflow-hidden">
             <button onClick={() => setIsLayoutOpen(!isLayoutOpen)} className="w-full p-5 flex items-center justify-between text-xs font-black uppercase text-gray-400 hover:text-white transition-colors italic">
               <span>Layout & Export</span> {isLayoutOpen ? <ChevronUp size={16} /> : <ChevronDown size={16} />}
             </button>
@@ -697,7 +725,7 @@ export default function DigitrikWorkstation() {
           </div>
 
           {/* MENU 2: GHOST SECURITY PROTOCOLS (NEW) */}
-          <div className="bg-[#111] rounded-2xl border border-white/5 overflow-hidden">
+          <div ref={ghostRef} className="bg-[#111] rounded-2xl border border-white/5 overflow-hidden">
             <button onClick={() => setIsGhostMenuOpen(!isGhostMenuOpen)} className="w-full p-5 flex items-center justify-between text-xs font-black uppercase text-gray-400 hover:text-white transition-colors italic">
               <span>Ghost Security Protocols</span> {isGhostMenuOpen ? <ChevronUp size={16} /> : <ChevronDown size={16} />}
             </button>
@@ -735,7 +763,7 @@ export default function DigitrikWorkstation() {
           </div>
 
           {/* MENU 3: PROTEZIONE MATRIX */}
-          <div className="bg-[#111] rounded-2xl border border-white/5 overflow-hidden">
+          <div ref={matrixRef} className="bg-[#111] rounded-2xl border border-white/5 overflow-hidden">
             <button onClick={() => setIsMatrixOpen(!isMatrixOpen)} className="w-full p-5 flex items-center justify-between text-xs font-black uppercase text-gray-400 hover:text-white transition-colors italic">
               <span>Protezione Matrix</span> {isMatrixOpen ? <ChevronUp size={16} /> : <ChevronDown size={16} />}
             </button>
