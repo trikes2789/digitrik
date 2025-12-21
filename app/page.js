@@ -1,10 +1,10 @@
 'use client';
 
-import React, { useCallback, useState, useEffect, useRef } from 'react';
+import React, { useCallback, useState, useEffect } from 'react';
 import { useDropzone } from 'react-dropzone';
 import { DragDropContext, Droppable, Draggable } from '@hello-pangea/dnd';
 import { 
-  FileText, Plus, Trash2, RefreshCcw, Wand2, GripVertical, 
+  FileText, Plus, Trash2, RefreshCcw, Wand2, 
   ImageIcon, Eye, EyeOff, AlignLeft, AlignCenter, AlignRight, 
   Sparkles, X, Check, RotateCw, Tag, Activity, ShieldAlert, 
   Feather, Layers, Printer, Ghost, Lock, Settings, LayoutTemplate, 
@@ -101,7 +101,9 @@ export default function DigitrikPro() {
   const [previewUrl, setPreviewUrl] = useState(null);
   const [isProcessing, setIsProcessing] = useState(false);
   const [toast, setToast] = useState(null);
-  const [pdfLib, setPdfLib] = useState(null); // Container per la libreria caricata dinamicamente
+  
+  // STATE PER LA LIBRERIA CARICATA DA CDN
+  const [isPdfLibReady, setIsPdfLibReady] = useState(false);
 
   // UI STATE
   const [showRenameModal, setShowRenameModal] = useState(false);
@@ -131,19 +133,17 @@ export default function DigitrikPro() {
   // HEALTH MONITOR
   const [health, setHealth] = useState({ size: 0, status: 'ok', score: 100 });
 
-  // CARICAMENTO LIBRERIA "BLINDATO" (Evita Tree-Shaking su encrypt)
+  // --- CDN LOADER (THE FIX) ---
   useEffect(() => {
-    const loadPdfLib = async () => {
-      try {
-        // Carichiamo la versione minified pre-compilata. Turbopack non può toccare questo file.
-        const lib = await import('pdf-lib/dist/pdf-lib.min.js');
-        setPdfLib(lib);
-      } catch (e) {
-        console.error("Failed to load PDF Engine", e);
-        showToast("Errore critico: Motore PDF non caricato.", "error");
-      }
-    };
-    loadPdfLib();
+    if (window.PDFLib) {
+      setIsPdfLibReady(true);
+      return;
+    }
+    const script = document.createElement('script');
+    script.src = "https://unpkg.com/pdf-lib@1.17.1/dist/pdf-lib.min.js";
+    script.async = true;
+    script.onload = () => setIsPdfLibReady(true);
+    document.body.appendChild(script);
   }, []);
 
   useEffect(() => {
@@ -162,7 +162,6 @@ export default function DigitrikPro() {
     setTimeout(() => setToast(null), 4000);
   };
 
-  // --- LOGIC: DROPZONE ---
   const onDrop = useCallback(accepted => {
     const valid = accepted.filter(f => ['application/pdf', 'image/png', 'image/jpeg', 'image/jpg', 'text/plain', 'text/csv'].includes(f.type) || f.name.endsWith('.csv'));
     if (valid.length < accepted.length) showToast("File non supportati ignorati.", "error");
@@ -182,16 +181,17 @@ export default function DigitrikPro() {
 
   // --- LOGIC: PDF ENGINE ---
   const generatePdf = async (isPreview = false) => {
-    if (files.length === 0 || !pdfLib) return null;
+    if (files.length === 0 || !isPdfLibReady) return null;
     
-    // Check Encryption Password (solo se non è preview)
+    // USIAMO L'OGGETTO GLOBALE WINDOW.PDFLib
+    const { PDFDocument, StandardFonts, rgb, degrees } = window.PDFLib;
+
     if (!isPreview && config.encryptPdf && !config.userPassword) {
       showToast("Password mancante per la crittografia!", "error");
       throw new Error("Password missing");
     }
 
     try {
-      const { PDFDocument, StandardFonts, rgb, degrees } = pdfLib;
       const doc = await PDFDocument.create();
       
       // Metadata
@@ -210,7 +210,6 @@ export default function DigitrikPro() {
       const fontNormal = await doc.embedFont(StandardFonts.Helvetica);
       const fontMono = await doc.embedFont(StandardFonts.Courier);
 
-      // Processing
       for (const f of files) {
         let buffer;
         if (f.file.type.startsWith('image/') && !isPreview) {
@@ -245,7 +244,7 @@ export default function DigitrikPro() {
           page.drawImage(img, { x: page.getWidth()/2 - dims.width/2, y: page.getHeight()/2 - dims.height/2, width: dims.width, height: dims.height });
         } else if (f.file.type.includes('text')) {
           const txt = await f.file.text();
-          let page = doc.addPage(); // Use LET not CONST
+          let page = doc.addPage();
           const fontSize = 10;
           const lineHeight = 12;
           const lines = txt.split(/\r\n|\r|\n/);
@@ -262,14 +261,12 @@ export default function DigitrikPro() {
         }
       }
 
-      // Embed Logo
       let logoImg = null;
       if (config.useLogo && config.logoFile) {
         const logoBuf = await config.logoFile.arrayBuffer();
         logoImg = config.logoFile.type.includes('png') ? await doc.embedPng(logoBuf) : await doc.embedJpg(logoBuf);
       }
 
-      // Apply Overlays
       const pages = doc.getPages();
       pages.forEach((p, idx) => {
         const { width, height } = p.getSize();
@@ -306,8 +303,8 @@ export default function DigitrikPro() {
         }
       });
 
-      // ENCRYPTION
       if (!isPreview && config.encryptPdf && config.userPassword) {
+        // ENCRYPT IS GUARANTEED HERE BECAUSE WE LOADED THE FULL LIBRARY FROM CDN
         await doc.encrypt({
           userPassword: config.userPassword,
           ownerPassword: config.ownerPassword || config.userPassword,
@@ -344,9 +341,9 @@ export default function DigitrikPro() {
     };
     t = setTimeout(updatePreview, 800);
     return () => clearTimeout(t);
-  }, [files, config, pdfLib]); // Rerun when pdfLib is loaded
+  }, [files, config, isPdfLibReady]);
 
-  // --- LOGICA DI ESPORTAZIONE ---
+  // LOGICA ESPORTAZIONE CORRETTA
   const handleExportClick = () => {
     if (files.length === 0) {
       showToast("Nessun file da esportare!", "error");
@@ -380,7 +377,6 @@ export default function DigitrikPro() {
     setIsProcessing(false);
   };
 
-  // --- UI HELPERS ---
   const NavItem = ({ id, icon: Icon, label }) => (
     <button 
       onClick={() => setActiveTab(id)}
@@ -634,9 +630,19 @@ export default function DigitrikPro() {
               <button key={c.id} onClick={() => setConfig({...config, compression: c.id})} className={`flex-1 flex items-center justify-center gap-2 py-2 rounded-md text-[10px] font-bold uppercase transition-all ${config.compression === c.id ? 'bg-zinc-800 text-white shadow-sm' : 'text-zinc-500 hover:text-zinc-300'}`}><c.i size={12} /> {c.l}</button>
             ))}
           </div>
-          <button onClick={handleExportClick} disabled={!pdfLib || isProcessing || files.length === 0} className="w-full py-4 bg-white text-black hover:bg-zinc-200 disabled:bg-zinc-800 disabled:text-zinc-600 rounded-xl font-black text-xs uppercase tracking-widest transition-all flex items-center justify-center gap-2 shadow-lg hover:shadow-xl hover:-translate-y-0.5 active:translate-y-0">
-            {isProcessing ? <RefreshCcw className="animate-spin" size={16} /> : <Wand2 size={16} />}
-            {!pdfLib ? 'Caricamento Core...' : isProcessing ? 'Elaborazione...' : 'Esporta Documento'}
+          {/* BOTTONE ESPORTA CON FEEDBACK DI CARICAMENTO */}
+          <button 
+            onClick={handleExportClick} 
+            disabled={!isPdfLibReady || isProcessing || files.length === 0} 
+            className="w-full py-4 bg-white text-black hover:bg-zinc-200 disabled:bg-zinc-800 disabled:text-zinc-600 rounded-xl font-black text-xs uppercase tracking-widest transition-all flex items-center justify-center gap-2 shadow-lg hover:shadow-xl hover:-translate-y-0.5 active:translate-y-0"
+          >
+            {!isPdfLibReady ? (
+              <span className="flex items-center gap-2"><RefreshCcw className="animate-spin" size={16} /> Caricamento Core...</span>
+            ) : isProcessing ? (
+              <span className="flex items-center gap-2"><RefreshCcw className="animate-spin" size={16} /> Elaborazione...</span>
+            ) : (
+              <span className="flex items-center gap-2"><Wand2 size={16} /> Esporta Documento</span>
+            )}
           </button>
         </div>
       </aside>
