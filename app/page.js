@@ -383,6 +383,25 @@ export default function DigitrikPro() {
     setHealth({ size: mb.toFixed(2), status: score > 80 ? 'ok' : score > 50 ? 'warn' : 'crit', score });
   }, [files, config]);
 
+  // HELPER PER STIMA PESO
+  const getEstimatedSize = (qualityFactor) => {
+    if (files.length === 0) return "0.00";
+    let total = 0;
+    files.forEach(f => {
+      // Se è un PDF, il peso rimane simile (non lo ricomprimiamo server-side)
+      if (f.file.type === 'application/pdf') {
+        total += f.file.size; 
+      } 
+      // Se è un'immagine, applichiamo il fattore di compressione stimato
+      else {
+        total += f.file.size * qualityFactor;
+      }
+    });
+    // Aggiungiamo un 5% di overhead per font e metadati PDF
+    total = total * 1.05; 
+    return (total / (1024 * 1024)).toFixed(2);
+  };
+
   const showToast = (msg, type = 'success') => {
     setToast({ msg, type });
     setTimeout(() => setToast(null), 4000);
@@ -1074,8 +1093,25 @@ export default function DigitrikPro() {
 
         <div className="pt-6 border-t border-white/5 mt-auto">
           <div className="flex bg-zinc-900 p-1 rounded-lg mb-4">
-            {[{id:'web', l:'Web', i:Feather}, {id:'balanced', l:'Std', i:Layers}, {id:'print', l:'Pro', i:Printer}].map(c => (
-              <button key={c.id} onClick={() => setConfig({...config, compression: c.id})} className={`flex-1 flex items-center justify-center gap-2 py-2 rounded-md text-[10px] font-bold uppercase transition-all ${config.compression === c.id ? 'bg-zinc-800 text-white shadow-sm' : 'text-zinc-500 hover:text-zinc-300'}`}><c.i size={12} /> {c.l}</button>
+            {[
+              {id:'web', l:'Web', i:Feather, factor: 0.3},
+              {id:'balanced', l:'Std', i:Layers, factor: 0.6},
+              {id:'print', l:'Pro', i:Printer, factor: 0.95}
+            ].map(c => (
+              <button 
+                key={c.id} 
+                onClick={() => setConfig({...config, compression: c.id})} 
+                className={`flex-1 flex flex-col items-center justify-center py-2 rounded-md transition-all ${config.compression === c.id ? 'bg-zinc-800 text-white shadow-sm ring-1 ring-white/10' : 'text-zinc-500 hover:text-zinc-300 hover:bg-zinc-800/50'}`}
+              >
+                <div className="flex items-center gap-2 mb-0.5">
+                  <c.i size={14} /> 
+                  <span className="text-[10px] font-bold uppercase">{c.l}</span>
+                </div>
+                {/* STIMA PESO LIVE */}
+                <span className={`text-[9px] font-mono ${config.compression === c.id ? 'text-blue-400' : 'text-zinc-600'}`}>
+                  ~{getEstimatedSize(c.factor)} MB
+                </span>
+              </button>
             ))}
           </div>
           <button 
