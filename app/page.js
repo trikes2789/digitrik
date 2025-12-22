@@ -91,15 +91,43 @@ const TRANSLATIONS = {
     didYouKnow: "Lo sapevi?",
     cancel: "Annulla",
     confirm: "Conferma & Scarica",
-    // Encyclopedia
+    // Encyclopedia (UPDATED LONG VERSION)
     enc: {
-      AI: { desc: "Vettoriale Adobe.", curiosity: "Rinominabile in PDF.", type: "Vettoriale" },
-      CSV: { desc: "Dati testuali.", curiosity: "Convertito in tabulato.", type: "Dati" },
-      DOCX: { desc: "Word XML.", curiosity: "È uno ZIP rinominato.", type: "Documento" },
-      JPG: { desc: "Foto compressa.", curiosity: "Soggetto a degrado.", type: "Immagine" },
-      PDF: { desc: "Portable Document.", curiosity: "Standard ISO dal 2008.", type: "Universale" },
-      PNG: { desc: "Web Lossless.", curiosity: "Supporta trasparenza.", type: "Immagine" },
-      TXT: { desc: "Testo puro.", curiosity: "Font Courier.", type: "Testo" }
+      AI: { 
+        desc: "Vettoriale Adobe.", 
+        curiosity: "Il formato AI di Adobe è essenzialmente un PDF modificabile mascherato. Sorprendentemente, se cambi l'estensione da .ai a .pdf, molti visualizzatori riusciranno ad aprirlo mostrando il contenuto vettoriale intatto.", 
+        type: "Vettoriale" 
+      },
+      CSV: { 
+        desc: "Dati testuali.", 
+        curiosity: "Creato nel 1972, il CSV è il formato dati più antico ancora in uso. Nonostante la sua semplicità, è la spina dorsale dello scambio dati mondiale perché leggibile da qualsiasi macchina.", 
+        type: "Dati" 
+      },
+      DOCX: { 
+        desc: "Word XML.", 
+        curiosity: "Il moderno formato DOCX è in realtà un archivio compresso. Se cambi l'estensione in .zip ed estrai il contenuto, troverai cartelle piene di file XML e immagini separate.", 
+        type: "Documento" 
+      },
+      JPG: { 
+        desc: "Foto compressa.", 
+        curiosity: "Il formato JPEG usa una compressione 'lossy' che elimina dati invisibili all'occhio umano. Ogni volta che salvi di nuovo una JPG, la qualità diminuisce leggermente, creando artefatti digitali.", 
+        type: "Immagine" 
+      },
+      PDF: { 
+        desc: "Portable Document.", 
+        curiosity: "Inventato nel 1993 per scambiare documenti su sistemi diversi. Oggi è uno standard ISO aperto così complesso che la sua documentazione tecnica supera le mille pagine di specifiche.", 
+        type: "Universale" 
+      },
+      PNG: { 
+        desc: "Web Lossless.", 
+        curiosity: "Sviluppato per sostituire le GIF, il PNG offre una compressione senza perdita. È l'unico formato web diffuso che supporta la trasparenza alpha, permettendo contorni sfumati perfetti su qualsiasi sfondo.", 
+        type: "Immagine" 
+      },
+      TXT: { 
+        desc: "Testo puro.", 
+        curiosity: "Il formato più puro esistente, privo di qualsiasi formattazione o stile. Essendo composto solo da caratteri ASCII o Unicode, un file TXT sarà leggibile tra 100 anni su qualsiasi computer.", 
+        type: "Testo" 
+      }
     }
   },
   en: {
@@ -179,15 +207,43 @@ const TRANSLATIONS = {
     didYouKnow: "Did you know?",
     cancel: "Cancel",
     confirm: "Confirm & Download",
-    // Encyclopedia
+    // Encyclopedia (UPDATED LONG VERSION)
     enc: {
-      AI: { desc: "Adobe Vector.", curiosity: "Can be renamed to PDF.", type: "Vector" },
-      CSV: { desc: "Text Data.", curiosity: "Converted to tables.", type: "Data" },
-      DOCX: { desc: "Word XML.", curiosity: "It's a renamed ZIP.", type: "Document" },
-      JPG: { desc: "Compressed Photo.", curiosity: "Subject to decay.", type: "Image" },
-      PDF: { desc: "Portable Document.", curiosity: "ISO Standard since 2008.", type: "Universal" },
-      PNG: { desc: "Web Lossless.", curiosity: "Supports alpha channel.", type: "Image" },
-      TXT: { desc: "Pure Text.", curiosity: "Courier Font.", type: "Text" }
+      AI: { 
+        desc: "Adobe Vector.", 
+        curiosity: "Adobe's AI format is essentially a disguised editable PDF. Surprisingly, if you simply rename the extension from .ai to .pdf, many standard viewers can open it and display the vector content.", 
+        type: "Vector" 
+      },
+      CSV: { 
+        desc: "Text Data.", 
+        curiosity: "Created way back in 1972, CSV remains the oldest data format still in wide use today. Despite its simplicity, it is the backbone of global data exchange because machines read it easily.", 
+        type: "Data" 
+      },
+      DOCX: { 
+        desc: "Word XML.", 
+        curiosity: "The modern DOCX format is actually a compressed archive in disguise. If you rename the extension to .zip and extract it, you will find folders full of XML code and images.", 
+        type: "Document" 
+      },
+      JPG: { 
+        desc: "Compressed Photo.", 
+        curiosity: "JPEG uses 'lossy' compression that discards data invisible to the human eye. However, every time you re-save a JPG file, quality degrades slightly, creating digital artifacts known as 'generation loss'.", 
+        type: "Image" 
+      },
+      PDF: { 
+        desc: "Portable Document.", 
+        curiosity: "Invented by Adobe in 1993 to exchange documents across different systems. It is now an open ISO standard so complex that its full technical documentation exceeds one thousand pages of specifications.", 
+        type: "Universal" 
+      },
+      PNG: { 
+        desc: "Web Lossless.", 
+        curiosity: "Developed to replace GIFs, PNG offers lossless compression. It is the only widely used web format supporting alpha transparency, allowing for smooth, anti-aliased edges on any background color without jagged lines.", 
+        type: "Image" 
+      },
+      TXT: { 
+        desc: "Pure Text.", 
+        curiosity: "The purest format in existence, stripped of all formatting or style. Composed solely of ASCII or Unicode characters, a TXT file will remain readable one hundred years from now on any computer.", 
+        type: "Text" 
+      }
     }
   }
 };
