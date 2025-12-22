@@ -16,7 +16,6 @@ import {
 // --- TRANSLATIONS & DATA ---
 const TRANSLATIONS = {
   it: {
-    // Sidebar & Nav
     appName: "Pro Suite",
     workspace: "Spazio di Lavoro",
     files: "Gestione File",
@@ -28,13 +27,11 @@ const TRANSLATIONS = {
     weight: "Peso Stimato",
     infoMenu: "Info & Contatti",
     supportBtn: "Sostieni il Progetto",
-    // Header
     fileManager: "Gestione File",
     layoutConfig: "Configurazione Layout",
     brandingConfig: "Personalizzazione Brand",
     securityConfig: "Sicurezza",
     filesLoaded: "File Caricati",
-    // Dropzone
     dropTitle: "Trascina qui i tuoi documenti",
     dropDesc: "Supportiamo PDF, Immagini HQ e file di testo. Il motore Digitrik si occuperà del resto.",
     browse: "oppure Sfoglia File",
@@ -44,14 +41,12 @@ const TRANSLATIONS = {
     preview: "Anteprima Live Output",
     previewHidden: "(Nascosta)",
     rendering: "Rendering Real-time",
-    // Actions
     mainAction: "Azione Principale",
     actionDesc: "Cosa vuoi fare con i file caricati?",
     actConvert: "Converti in PDF",
     actMerge: "Unisci File (Merge)",
     actExtract: "Estrai Pagine",
     rangeLabel: "Range Pagine (es. 1-3, 5)",
-    // Layout
     pageStruct: "Struttura Pagina",
     header: "Intestazione",
     headerPlace: "Testo Header...",
@@ -61,7 +56,6 @@ const TRANSLATIONS = {
     paginationSub: "Posizione Automatica",
     position: "Posizione",
     rotation: "Rotazione Pagine",
-    // Watermark
     textWatermark: "Filigrana Testuale",
     watermarkPlace: "Testo filigrana (es. BOZZA)",
     optRibbon: "Nastro (Diagonale)",
@@ -75,33 +69,28 @@ const TRANSLATIONS = {
     activeLogo: "Attiva Logo (Pattern)",
     logoSize: "Dimensione Loghi",
     logoOpacity: "Opacità Logo",
-    // Security
     ghostProto: "Ghost Protocol",
     ghostDesc: "Rimuove metadati, autore e data creazione per l'anonimato.",
     publicMeta: "Metadati Pubblici",
     docTitle: "Titolo Documento",
     docAuthor: "Autore",
-    // Export
     exportBtn: "Esporta Documento",
     processing: "Elaborazione...",
     loadingCore: "Caricamento Core...",
     noFiles: "Nessun file da esportare!",
     downloadOk: "Download completato con successo!",
-    // Modal Rename
     finalTrick: "Finalizza Trick",
     chooseName: "Scegli il nome del tuo file",
     fileName: "Nome File",
     didYouKnow: "Lo sapevi?",
     cancel: "Annulla",
     confirm: "Conferma & Scarica",
-    // Modal Info
     aboutTitle: "La nostra Mission",
     aboutText: "Digitrik Pro è nato dalla mia curiosità per la programmazione, e per semplificare il lavoro di migliaia di persone che trattano con i PDF. Credo nella Privacy totale: i tuoi file non lasciano MAI il tuo browser.",
     contactTitle: "Contattaci",
     privacyTitle: "Privacy First",
     privacyText: "Nessun server, nessun cloud, nessun tracciamento. L'elaborazione avviene al 100% sul tuo dispositivo.",
     rights: "Tutti i diritti riservati.",
-    // Modal Support
     supportTitle: "Sostieni Digitrik",
     supportSub: "Aiutaci a mantenere il servizio gratuito e senza server.",
     donateTitle: "Offrici un caffè",
@@ -109,7 +98,6 @@ const TRANSLATIONS = {
     adTitle: "Guarda uno Spot",
     adDesc: "30 secondi del tuo tempo per supportarci gratis.",
     adButton: "Guarda Video (Presto disponibile)",
-    // Encyclopedia
     enc: {
       AI: { desc: "Vettoriale Adobe.", curiosity: "Il formato AI di Adobe è essenzialmente un PDF modificabile mascherato. Sorprendentemente, se cambi l'estensione da .ai a .pdf, molti visualizzatori riusciranno ad aprirlo mostrando il contenuto vettoriale intatto.", type: "Vettoriale" },
       CSV: { desc: "Dati testuali.", curiosity: "Creato nel 1972, il CSV è il formato dati più antico ancora in uso. Nonostante la sua semplicità, è la spina dorsale dello scambio dati mondiale perché leggibile da qualsiasi macchina.", type: "Dati" },
@@ -121,7 +109,6 @@ const TRANSLATIONS = {
     }
   },
   en: {
-    // Sidebar & Nav
     appName: "Pro Suite",
     workspace: "Workspace",
     files: "File Manager",
@@ -133,31 +120,26 @@ const TRANSLATIONS = {
     weight: "Est. Weight",
     infoMenu: "Info & Contacts",
     supportBtn: "Support Project",
-    // Header
     fileManager: "File Manager",
     layoutConfig: "Layout Config",
     brandingConfig: "Brand Customization",
     securityConfig: "Security",
     filesLoaded: "Files Loaded",
-    // Dropzone
     dropTitle: "Drop your documents here",
     dropDesc: "We support PDF, HQ Images, and text files. The Digitrik engine handles the rest.",
     browse: "or Browse Files",
     add: "Add File",
     unsupported: "Unsupported files ignored.",
     added: "files added.",
-    // Preview
     preview: "Live Output Preview",
     previewHidden: "(Hidden)",
     rendering: "Real-time Rendering",
-    // Actions
     mainAction: "Main Action",
     actionDesc: "What to do with uploaded files?",
     actConvert: "Convert to PDF",
     actMerge: "Merge Files",
     actExtract: "Extract Pages",
     rangeLabel: "Page Range (e.g., 1-3, 5)",
-    // Layout
     pageStruct: "Page Structure",
     header: "Header",
     headerPlace: "Header text...",
@@ -167,7 +149,6 @@ const TRANSLATIONS = {
     paginationSub: "Automatic Position",
     position: "Position",
     rotation: "Page Rotation",
-    // Watermark
     textWatermark: "Text Watermark",
     watermarkPlace: "Watermark text (e.g. DRAFT)",
     optRibbon: "Ribbon (Diagonal)",
@@ -181,33 +162,28 @@ const TRANSLATIONS = {
     activeLogo: "Enable Logo (Pattern)",
     logoSize: "Logo Size",
     logoOpacity: "Logo Opacity",
-    // Security
     ghostProto: "Ghost Protocol",
     ghostDesc: "Removes metadata, author, and dates for total anonymity.",
     publicMeta: "Public Metadata",
     docTitle: "Document Title",
     docAuthor: "Author",
-    // Export
     exportBtn: "Export Document",
     processing: "Processing...",
     loadingCore: "Loading Core...",
     noFiles: "No files to export!",
     downloadOk: "Download completed successfully!",
-    // Modal Rename
     finalTrick: "Finalize Trick",
     chooseName: "Choose your filename",
     fileName: "File Name",
     didYouKnow: "Did you know?",
     cancel: "Cancel",
     confirm: "Confirm & Download",
-    // Modal Info
     aboutTitle: "Our Mission",
     aboutText: "Digitrik Pro was born from my curiosity for programming, and to simplify the work of thousands of people dealing with PDFs. I believe in total Privacy: your files NEVER leave your browser.",
     contactTitle: "Contact Us",
     privacyTitle: "Privacy First",
     privacyText: "No servers, no cloud, no tracking. Processing happens 100% on your device.",
     rights: "All rights reserved.",
-    // Modal Support
     supportTitle: "Support Digitrik",
     supportSub: "Help us keep the service free and serverless.",
     donateTitle: "Buy us a coffee",
@@ -215,7 +191,6 @@ const TRANSLATIONS = {
     adTitle: "Watch an Ad",
     adDesc: "30 seconds of your time to support us for free.",
     adButton: "Watch Video (Coming Soon)",
-    // Encyclopedia
     enc: {
       AI: { desc: "Adobe Vector.", curiosity: "Adobe's AI format is essentially a disguised editable PDF. Surprisingly, if you simply rename the extension from .ai to .pdf, many standard viewers can open it and display the vector content.", type: "Vector" },
       CSV: { desc: "Text Data.", curiosity: "Created way back in 1972, CSV remains the oldest data format still in wide use today. Despite its simplicity, it is the backbone of global data exchange because machines read it easily.", type: "Data" },
@@ -339,7 +314,7 @@ export default function DigitrikPro() {
   // UI STATE
   const [showRenameModal, setShowRenameModal] = useState(false);
   const [showInfoModal, setShowInfoModal] = useState(false); 
-  const [showSupportModal, setShowSupportModal] = useState(false); 
+  const [showSupportModal, setShowSupportModal] = useState(false); // NEW STATE FOR SUPPORT MODAL
   const [tempFilename, setTempFilename] = useState("Digitrik_Result");
   const [trickCuriosity, setTrickCuriosity] = useState({ key: 'PDF', text: '' });
   const [isPreviewOpen, setIsPreviewOpen] = useState(true);
@@ -775,7 +750,7 @@ export default function DigitrikPro() {
         </div>
       )}
 
-      {/* SUPPORT MODAL */}
+      {/* SUPPORT MODAL (NEW!) */}
       {showSupportModal && (
         <div className="fixed inset-0 z-[100] flex items-center justify-center bg-black/80 backdrop-blur-sm transition-opacity duration-300 animate-in fade-in">
           <div className="bg-[#0a0a0a] border border-green-500/30 rounded-[2rem] w-[90%] max-w-2xl overflow-hidden shadow-[0_0_50px_rgba(34,197,94,0.1)] relative">
@@ -942,6 +917,7 @@ export default function DigitrikPro() {
 
       {/* RIGHT SIDEBAR */}
       <aside className="w-80 border-l border-white/5 bg-zinc-950 p-6 flex flex-col overflow-y-auto">
+        
         {/* --- MOVED TOP: EXPORT & CONSOLE --- */}
         <div className="mb-8 border-b border-white/5 pb-8">
           <div className="flex bg-zinc-900 p-1 rounded-lg mb-4">
