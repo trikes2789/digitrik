@@ -9,7 +9,8 @@ import {
   ImageIcon, Eye, EyeOff, AlignLeft, AlignCenter, AlignRight, 
   Sparkles, X, Check, RotateCw, Tag, Activity, ShieldAlert, 
   Feather, Layers, Printer, Ghost, Lock, Settings, LayoutTemplate, 
-  Image as IconImage, Shield, FileOutput, UploadCloud, Grid3X3, List, Globe
+  Image as IconImage, Shield, FileOutput, UploadCloud, Grid3X3, List,
+  Info, Mail, ShieldCheck, Heart
 } from 'lucide-react';
 
 // --- TRANSLATIONS & DATA ---
@@ -25,6 +26,7 @@ const TRANSLATIONS = {
     security: "Ghost Mode",
     health: "Salute Sistema",
     weight: "Peso Stimato",
+    infoMenu: "Info & Contatti",
     // Header
     fileManager: "Gestione File",
     layoutConfig: "Configurazione Layout",
@@ -37,7 +39,6 @@ const TRANSLATIONS = {
     add: "Aggiungi",
     unsupported: "File non supportati ignorati.",
     added: "file aggiunti.",
-    // Preview
     preview: "Anteprima Live Output",
     previewHidden: "(Nascosta)",
     rendering: "Rendering Real-time",
@@ -84,50 +85,29 @@ const TRANSLATIONS = {
     loadingCore: "Caricamento Core...",
     noFiles: "Nessun file da esportare!",
     downloadOk: "Download completato con successo!",
-    // Modal
+    // Modal Rename
     finalTrick: "Finalizza Trick",
     chooseName: "Scegli il nome del tuo file",
     fileName: "Nome File",
     didYouKnow: "Lo sapevi?",
     cancel: "Annulla",
     confirm: "Conferma & Scarica",
-    // Encyclopedia (UPDATED LONG VERSION)
+    // Modal Info
+    aboutTitle: "La nostra Mission",
+    aboutText: "Digitrik Pro è nato dalla mia curiosità per la programmazione, e per semplificare il lavoro di migliaia di persone che trattano con i PDF. Credo nella Privacy totale: i tuoi file non lasciano MAI il tuo browser.",
+    contactTitle: "Contattaci",
+    privacyTitle: "Privacy First",
+    privacyText: "Nessun server, nessun cloud, nessun tracciamento. L'elaborazione avviene al 100% sul tuo dispositivo.",
+    rights: "Tutti i diritti riservati.",
+    // Encyclopedia
     enc: {
-      AI: { 
-        desc: "Vettoriale Adobe.", 
-        curiosity: "Il formato AI di Adobe è essenzialmente un PDF modificabile mascherato. Sorprendentemente, se cambi l'estensione da .ai a .pdf, molti visualizzatori riusciranno ad aprirlo mostrando il contenuto vettoriale intatto.", 
-        type: "Vettoriale" 
-      },
-      CSV: { 
-        desc: "Dati testuali.", 
-        curiosity: "Creato nel 1972, il CSV è il formato dati più antico ancora in uso. Nonostante la sua semplicità, è la spina dorsale dello scambio dati mondiale perché leggibile da qualsiasi macchina.", 
-        type: "Dati" 
-      },
-      DOCX: { 
-        desc: "Word XML.", 
-        curiosity: "Il moderno formato DOCX è in realtà un archivio compresso. Se cambi l'estensione in .zip ed estrai il contenuto, troverai cartelle piene di file XML e immagini separate.", 
-        type: "Documento" 
-      },
-      JPG: { 
-        desc: "Foto compressa.", 
-        curiosity: "Il formato JPEG usa una compressione 'lossy' che elimina dati invisibili all'occhio umano. Ogni volta che salvi di nuovo una JPG, la qualità diminuisce leggermente, creando artefatti digitali.", 
-        type: "Immagine" 
-      },
-      PDF: { 
-        desc: "Portable Document.", 
-        curiosity: "Inventato nel 1993 per scambiare documenti su sistemi diversi. Oggi è uno standard ISO aperto così complesso che la sua documentazione tecnica supera le mille pagine di specifiche.", 
-        type: "Universale" 
-      },
-      PNG: { 
-        desc: "Web Lossless.", 
-        curiosity: "Sviluppato per sostituire le GIF, il PNG offre una compressione senza perdita. È l'unico formato web diffuso che supporta la trasparenza alpha, permettendo contorni sfumati perfetti su qualsiasi sfondo.", 
-        type: "Immagine" 
-      },
-      TXT: { 
-        desc: "Testo puro.", 
-        curiosity: "Il formato più puro esistente, privo di qualsiasi formattazione o stile. Essendo composto solo da caratteri ASCII o Unicode, un file TXT sarà leggibile tra 100 anni su qualsiasi computer.", 
-        type: "Testo" 
-      }
+      AI: { desc: "Vettoriale Adobe.", curiosity: "Il formato AI di Adobe è essenzialmente un PDF modificabile mascherato. Sorprendentemente, se cambi l'estensione da .ai a .pdf, molti visualizzatori riusciranno ad aprirlo mostrando il contenuto vettoriale intatto.", type: "Vettoriale" },
+      CSV: { desc: "Dati testuali.", curiosity: "Creato nel 1972, il CSV è il formato dati più antico ancora in uso. Nonostante la sua semplicità, è la spina dorsale dello scambio dati mondiale perché leggibile da qualsiasi macchina.", type: "Dati" },
+      DOCX: { desc: "Word XML.", curiosity: "Il moderno formato DOCX è in realtà un archivio compresso. Se cambi l'estensione in .zip ed estrai il contenuto, troverai cartelle piene di file XML e immagini separate.", type: "Documento" },
+      JPG: { desc: "Foto compressa.", curiosity: "Il formato JPEG usa una compressione 'lossy' che elimina dati invisibili all'occhio umano. Ogni volta che salvi di nuovo una JPG, la qualità diminuisce leggermente, creando artefatti digitali.", type: "Immagine" },
+      PDF: { desc: "Portable Document.", curiosity: "Inventato nel 1993 per scambiare documenti su sistemi diversi. Oggi è uno standard ISO aperto così complesso che la sua documentazione tecnica supera le mille pagine di specifiche.", type: "Universale" },
+      PNG: { desc: "Web Lossless.", curiosity: "Sviluppato per sostituire le GIF, il PNG offre una compressione senza perdita. È l'unico formato web diffuso che supporta la trasparenza alpha, permettendo contorni sfumati perfetti su qualsiasi sfondo.", type: "Immagine" },
+      TXT: { desc: "Testo puro.", curiosity: "Il formato più puro esistente, privo di qualsiasi formattazione o stile. Essendo composto solo da caratteri ASCII o Unicode, un file TXT sarà leggibile tra 100 anni su qualsiasi computer.", type: "Testo" }
     }
   },
   en: {
@@ -141,6 +121,7 @@ const TRANSLATIONS = {
     security: "Ghost Mode",
     health: "System Health",
     weight: "Est. Weight",
+    infoMenu: "Info & Contacts",
     // Header
     fileManager: "File Manager",
     layoutConfig: "Layout Config",
@@ -200,50 +181,29 @@ const TRANSLATIONS = {
     loadingCore: "Loading Core...",
     noFiles: "No files to export!",
     downloadOk: "Download completed successfully!",
-    // Modal
+    // Modal Rename
     finalTrick: "Finalize Trick",
     chooseName: "Choose your filename",
     fileName: "File Name",
     didYouKnow: "Did you know?",
     cancel: "Cancel",
     confirm: "Confirm & Download",
-    // Encyclopedia (UPDATED LONG VERSION)
+    // Modal Info
+    aboutTitle: "Our Mission",
+    aboutText: "Digitrik Pro was born from my curiosity for programming, and to simplify the work of thousands of people dealing with PDFs. I believe in total Privacy: your files NEVER leave your browser.",
+    contactTitle: "Contact Us",
+    privacyTitle: "Privacy First",
+    privacyText: "No servers, no cloud, no tracking. Processing happens 100% on your device.",
+    rights: "All rights reserved.",
+    // Encyclopedia
     enc: {
-      AI: { 
-        desc: "Adobe Vector.", 
-        curiosity: "Adobe's AI format is essentially a disguised editable PDF. Surprisingly, if you simply rename the extension from .ai to .pdf, many standard viewers can open it and display the vector content.", 
-        type: "Vector" 
-      },
-      CSV: { 
-        desc: "Text Data.", 
-        curiosity: "Created way back in 1972, CSV remains the oldest data format still in wide use today. Despite its simplicity, it is the backbone of global data exchange because machines read it easily.", 
-        type: "Data" 
-      },
-      DOCX: { 
-        desc: "Word XML.", 
-        curiosity: "The modern DOCX format is actually a compressed archive in disguise. If you rename the extension to .zip and extract it, you will find folders full of XML code and images.", 
-        type: "Document" 
-      },
-      JPG: { 
-        desc: "Compressed Photo.", 
-        curiosity: "JPEG uses 'lossy' compression that discards data invisible to the human eye. However, every time you re-save a JPG file, quality degrades slightly, creating digital artifacts known as 'generation loss'.", 
-        type: "Image" 
-      },
-      PDF: { 
-        desc: "Portable Document.", 
-        curiosity: "Invented by Adobe in 1993 to exchange documents across different systems. It is now an open ISO standard so complex that its full technical documentation exceeds one thousand pages of specifications.", 
-        type: "Universal" 
-      },
-      PNG: { 
-        desc: "Web Lossless.", 
-        curiosity: "Developed to replace GIFs, PNG offers lossless compression. It is the only widely used web format supporting alpha transparency, allowing for smooth, anti-aliased edges on any background color without jagged lines.", 
-        type: "Image" 
-      },
-      TXT: { 
-        desc: "Pure Text.", 
-        curiosity: "The purest format in existence, stripped of all formatting or style. Composed solely of ASCII or Unicode characters, a TXT file will remain readable one hundred years from now on any computer.", 
-        type: "Text" 
-      }
+      AI: { desc: "Adobe Vector.", curiosity: "Adobe's AI format is essentially a disguised editable PDF. Surprisingly, if you simply rename the extension from .ai to .pdf, many standard viewers can open it and display the vector content.", type: "Vector" },
+      CSV: { desc: "Text Data.", curiosity: "Created way back in 1972, CSV remains the oldest data format still in wide use today. Despite its simplicity, it is the backbone of global data exchange because machines read it easily.", type: "Data" },
+      DOCX: { desc: "Word XML.", curiosity: "The modern DOCX format is actually a compressed archive in disguise. If you rename the extension to .zip and extract it, you will find folders full of XML code and images.", type: "Document" },
+      JPG: { desc: "Compressed Photo.", curiosity: "JPEG uses 'lossy' compression that discards data invisible to the human eye. However, every time you re-save a JPG file, quality degrades slightly, creating digital artifacts known as 'generation loss'.", type: "Image" },
+      PDF: { desc: "Portable Document.", curiosity: "Invented by Adobe in 1993 to exchange documents across different systems. It is now an open ISO standard so complex that its full technical documentation exceeds one thousand pages of specifications.", type: "Universal" },
+      PNG: { desc: "Web Lossless.", curiosity: "Developed to replace GIFs, PNG offers lossless compression. It is the only widely used web format supporting alpha transparency, allowing for smooth, anti-aliased edges on any background color without jagged lines.", type: "Image" },
+      TXT: { desc: "Pure Text.", curiosity: "The purest format in existence, stripped of all formatting or style. Composed solely of ASCII or Unicode characters, a TXT file will remain readable one hundred years from now on any computer.", type: "Text" }
     }
   }
 };
@@ -327,8 +287,6 @@ const Toggle = ({ label, checked, onChange, icon: Icon, subLabel }) => (
         {subLabel && <span className="text-[10px] text-zinc-500 block">{subLabel}</span>}
       </div>
     </div>
-    
-    {/* SWITCH CONTAINER */}
     <div className={`w-8 h-4 rounded-full relative transition-colors duration-300 ${checked ? 'bg-blue-500' : 'bg-zinc-700'}`}>
       <div className={`absolute top-0.5 left-0.5 w-3 h-3 bg-white rounded-full transition-transform duration-300 ${checked ? 'translate-x-4' : 'translate-x-0'}`} />
     </div>
@@ -345,21 +303,22 @@ const Toast = ({ message, type, onClose }) => (
 
 // --- MAIN APP ---
 export default function DigitrikPro() {
-  // CORE STATE
+  // CORE STATE (Default to ENGLISH as requested)
   const [lang, setLang] = useState('en');
-  const t = TRANSLATIONS[lang]; // Helper per le traduzioni correnti
+  const t = TRANSLATIONS[lang]; 
 
   const [files, setFiles] = useState([]);
   const [activeTab, setActiveTab] = useState('files'); 
   const [previewUrl, setPreviewUrl] = useState(null);
   const [isProcessing, setIsProcessing] = useState(false);
   const [toast, setToast] = useState(null);
-   
+    
   // SDK STATE (Load from CDN)
   const [isSdkReady, setIsSdkReady] = useState(false);
 
   // UI STATE
   const [showRenameModal, setShowRenameModal] = useState(false);
+  const [showInfoModal, setShowInfoModal] = useState(false); // NEW STATE FOR INFO MODAL
   const [tempFilename, setTempFilename] = useState("Digitrik_Result");
   const [trickCuriosity, setTrickCuriosity] = useState({ key: 'PDF', text: '' });
   const [isPreviewOpen, setIsPreviewOpen] = useState(true);
@@ -413,7 +372,7 @@ export default function DigitrikPro() {
     if (valid.length < accepted.length) showToast(t.unsupported, "error");
     setFiles(prev => [...prev, ...valid.map(f => ({ id: Math.random().toString(36), file: f }))]);
     if (valid.length > 0) showToast(`${valid.length} ${t.added}`);
-  }, [lang]); // Dipendenza lang per il toast
+  }, [lang]); 
 
   const { getRootProps, getInputProps, isDragActive } = useDropzone({ onDrop, noClick: true });
 
@@ -661,7 +620,7 @@ export default function DigitrikPro() {
         onLoad={() => setIsSdkReady(true)}
       />
 
-      {/* MODAL */}
+      {/* RENAME MODAL */}
       {showRenameModal && (
         <div className="fixed inset-0 z-[100] flex items-center justify-center bg-black/80 backdrop-blur-sm transition-opacity duration-300">
           <div className="bg-[#0a0a0a] border border-blue-600/30 rounded-[2rem] w-[90%] max-w-lg p-8 shadow-[0_0_50px_rgba(37,99,235,0.1)] relative">
@@ -692,6 +651,63 @@ export default function DigitrikPro() {
         </div>
       )}
 
+      {/* INFO MODAL (NEW!) */}
+      {showInfoModal && (
+        <div className="fixed inset-0 z-[100] flex items-center justify-center bg-black/80 backdrop-blur-sm transition-opacity duration-300 animate-in fade-in">
+          <div className="bg-[#0a0a0a] border border-zinc-800 rounded-[2rem] w-[90%] max-w-lg overflow-hidden shadow-2xl relative">
+            
+            {/* Header */}
+            <div className="p-8 border-b border-white/5 bg-zinc-950/50">
+                <div className="flex items-center gap-3">
+                    <div className="bg-zinc-800 p-3 rounded-full text-white"><Info size={24} /></div>
+                    <div>
+                        <h3 className="text-xl font-black italic text-white uppercase tracking-wider">Info & Support</h3>
+                        <p className="text-[11px] text-gray-500 font-bold uppercase">DigitrikPro Team</p>
+                    </div>
+                    <button onClick={() => setShowInfoModal(false)} className="absolute top-8 right-8 text-gray-600 hover:text-white transition-colors"><X size={20} /></button>
+                </div>
+            </div>
+
+            {/* Content */}
+            <div className="p-8 space-y-6">
+                
+                {/* About Section */}
+                <div>
+                    <div className="flex items-center gap-2 mb-2 text-blue-500 font-bold uppercase text-xs tracking-wider">
+                        <Heart size={14} /> {t.aboutTitle}
+                    </div>
+                    <p className="text-sm text-zinc-400 leading-relaxed italic border-l-2 border-blue-500/20 pl-4">
+                        "{t.aboutText}"
+                    </p>
+                </div>
+
+                {/* Contact Section */}
+                <div className="bg-zinc-900/50 rounded-xl p-4 border border-zinc-800 hover:border-blue-500/30 transition-colors">
+                     <div className="flex items-center gap-2 mb-2 text-zinc-300 font-bold uppercase text-xs tracking-wider">
+                        <Mail size={14} /> {t.contactTitle}
+                    </div>
+                    <a href="mailto:trichesir@gmail.com" className="text-blue-400 hover:text-blue-300 font-mono text-sm block">trichesir@gmail.com</a>
+                </div>
+
+                {/* Privacy Badge */}
+                <div className="bg-green-900/10 rounded-xl p-4 border border-green-500/20 flex items-start gap-4">
+                    <ShieldCheck size={24} className="text-green-500 shrink-0 mt-1" />
+                    <div>
+                        <h4 className="text-green-500 font-bold uppercase text-xs tracking-wider mb-1">{t.privacyTitle}</h4>
+                        <p className="text-[11px] text-green-200/70 leading-relaxed">{t.privacyText}</p>
+                    </div>
+                </div>
+
+            </div>
+            
+            {/* Footer */}
+            <div className="p-4 bg-zinc-950 text-center border-t border-white/5">
+                <p className="text-[10px] text-zinc-600 uppercase tracking-widest">© 2024 DigitrikPro Team. {t.rights}</p>
+            </div>
+          </div>
+        </div>
+      )}
+
       {/* LEFT SIDEBAR */}
       <aside className="w-64 border-r border-white/5 bg-zinc-950 flex flex-col p-4 z-20">
         <div className="mb-8 px-2 flex items-center gap-2">
@@ -716,6 +732,15 @@ export default function DigitrikPro() {
           <NavItem id="watermark" icon={ImageIcon} label={t.watermark} />
           <NavItem id="security" icon={Lock} label={t.security} />
         </nav>
+
+        {/* INFO BUTTON (NEW) */}
+        <button 
+          onClick={() => setShowInfoModal(true)}
+          className="flex items-center gap-3 p-3 rounded-xl text-zinc-500 hover:text-zinc-200 hover:bg-zinc-900 transition-all mb-4 text-xs font-bold uppercase tracking-wide border border-transparent hover:border-zinc-800"
+        >
+          <Info size={16} /> {t.infoMenu}
+        </button>
+
         <div className={`mt-auto p-4 rounded-2xl border ${health.status === 'crit' ? 'bg-red-950/20 border-red-500/20' : 'bg-zinc-900 border-white/5'}`}>
           <div className="flex justify-between items-end mb-2"><span className="text-[10px] font-bold text-zinc-500 uppercase">{t.health}</span><span className={`text-xs font-black ${health.status === 'ok' ? 'text-green-500' : 'text-yellow-500'}`}>{health.score}%</span></div>
           <div className="w-full h-1 bg-zinc-800 rounded-full mb-3 overflow-hidden"><div className={`h-full transition-all duration-500 ${health.status === 'ok' ? 'bg-green-500' : 'bg-yellow-500'}`} style={{width: `${health.score}%`}} /></div>
