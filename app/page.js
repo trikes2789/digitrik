@@ -10,7 +10,7 @@ import {
   Sparkles, X, Check, RotateCw, Tag, Activity, ShieldAlert, 
   Feather, Layers, Printer, Ghost, Lock, Settings, LayoutTemplate, 
   Image as IconImage, Shield, FileOutput, UploadCloud, Grid3X3, List,
-  Info, Mail, ShieldCheck, Heart, FolderOpen
+  Info, Mail, ShieldCheck, Heart, FolderOpen, Coffee, PlayCircle, CreditCard
 } from 'lucide-react';
 
 // --- TRANSLATIONS & DATA ---
@@ -27,6 +27,7 @@ const TRANSLATIONS = {
     health: "Salute Sistema",
     weight: "Peso Stimato",
     infoMenu: "Info & Contatti",
+    supportBtn: "Sostieni il Progetto",
     // Header
     fileManager: "Gestione File",
     layoutConfig: "Configurazione Layout",
@@ -36,7 +37,7 @@ const TRANSLATIONS = {
     // Dropzone
     dropTitle: "Trascina qui i tuoi documenti",
     dropDesc: "Supportiamo PDF, Immagini HQ e file di testo. Il motore Digitrik si occuperà del resto.",
-    browse: "oppure Sfoglia File", // NUOVO
+    browse: "oppure Sfoglia File",
     add: "Aggiungi File",
     unsupported: "File non supportati ignorati.",
     added: "file aggiunti.",
@@ -100,6 +101,14 @@ const TRANSLATIONS = {
     privacyTitle: "Privacy First",
     privacyText: "Nessun server, nessun cloud, nessun tracciamento. L'elaborazione avviene al 100% sul tuo dispositivo.",
     rights: "Tutti i diritti riservati.",
+    // Modal Support
+    supportTitle: "Sostieni Digitrik",
+    supportSub: "Aiutaci a mantenere il servizio gratuito e senza server.",
+    donateTitle: "Offrici un caffè",
+    donateDesc: "Anche 1€ fa la differenza per lo sviluppo.",
+    adTitle: "Guarda uno Spot",
+    adDesc: "30 secondi del tuo tempo per supportarci gratis.",
+    adButton: "Guarda Video (Presto disponibile)",
     // Encyclopedia
     enc: {
       AI: { desc: "Vettoriale Adobe.", curiosity: "Il formato AI di Adobe è essenzialmente un PDF modificabile mascherato. Sorprendentemente, se cambi l'estensione da .ai a .pdf, molti visualizzatori riusciranno ad aprirlo mostrando il contenuto vettoriale intatto.", type: "Vettoriale" },
@@ -123,6 +132,7 @@ const TRANSLATIONS = {
     health: "System Health",
     weight: "Est. Weight",
     infoMenu: "Info & Contacts",
+    supportBtn: "Support Project",
     // Header
     fileManager: "File Manager",
     layoutConfig: "Layout Config",
@@ -132,7 +142,7 @@ const TRANSLATIONS = {
     // Dropzone
     dropTitle: "Drop your documents here",
     dropDesc: "We support PDF, HQ Images, and text files. The Digitrik engine handles the rest.",
-    browse: "or Browse Files", // NEW
+    browse: "or Browse Files",
     add: "Add File",
     unsupported: "Unsupported files ignored.",
     added: "files added.",
@@ -197,6 +207,14 @@ const TRANSLATIONS = {
     privacyTitle: "Privacy First",
     privacyText: "No servers, no cloud, no tracking. Processing happens 100% on your device.",
     rights: "All rights reserved.",
+    // Modal Support
+    supportTitle: "Support Digitrik",
+    supportSub: "Help us keep the service free and serverless.",
+    donateTitle: "Buy us a coffee",
+    donateDesc: "Even 1€ makes a difference for development.",
+    adTitle: "Watch an Ad",
+    adDesc: "30 seconds of your time to support us for free.",
+    adButton: "Watch Video (Coming Soon)",
     // Encyclopedia
     enc: {
       AI: { desc: "Adobe Vector.", curiosity: "Adobe's AI format is essentially a disguised editable PDF. Surprisingly, if you simply rename the extension from .ai to .pdf, many standard viewers can open it and display the vector content.", type: "Vector" },
@@ -321,6 +339,7 @@ export default function DigitrikPro() {
   // UI STATE
   const [showRenameModal, setShowRenameModal] = useState(false);
   const [showInfoModal, setShowInfoModal] = useState(false); 
+  const [showSupportModal, setShowSupportModal] = useState(false); // NEW STATE FOR SUPPORT MODAL
   const [tempFilename, setTempFilename] = useState("Digitrik_Result");
   const [trickCuriosity, setTrickCuriosity] = useState({ key: 'PDF', text: '' });
   const [isPreviewOpen, setIsPreviewOpen] = useState(true);
@@ -670,7 +689,7 @@ export default function DigitrikPro() {
         </div>
       )}
 
-      {/* INFO MODAL (NEW!) */}
+      {/* INFO MODAL */}
       {showInfoModal && (
         <div className="fixed inset-0 z-[100] flex items-center justify-center bg-black/80 backdrop-blur-sm transition-opacity duration-300 animate-in fade-in">
           <div className="bg-[#0a0a0a] border border-zinc-800 rounded-[2rem] w-[90%] max-w-lg overflow-hidden shadow-2xl relative">
@@ -727,6 +746,59 @@ export default function DigitrikPro() {
         </div>
       )}
 
+      {/* SUPPORT MODAL (NEW!) */}
+      {showSupportModal && (
+        <div className="fixed inset-0 z-[100] flex items-center justify-center bg-black/80 backdrop-blur-sm transition-opacity duration-300 animate-in fade-in">
+          <div className="bg-[#0a0a0a] border border-green-500/30 rounded-[2rem] w-[90%] max-w-2xl overflow-hidden shadow-[0_0_50px_rgba(34,197,94,0.1)] relative">
+            
+            {/* Header */}
+            <div className="p-8 border-b border-white/5 bg-zinc-950/50">
+                <div className="flex items-center gap-3">
+                    <div className="bg-green-500/10 p-3 rounded-full text-green-500"><Coffee size={24} /></div>
+                    <div>
+                        <h3 className="text-xl font-black italic text-white uppercase tracking-wider">{t.supportTitle}</h3>
+                        <p className="text-[11px] text-gray-500 font-bold uppercase">{t.supportSub}</p>
+                    </div>
+                    <button onClick={() => setShowSupportModal(false)} className="absolute top-8 right-8 text-gray-600 hover:text-white transition-colors"><X size={20} /></button>
+                </div>
+            </div>
+
+            {/* Content 2 Cols */}
+            <div className="grid grid-cols-1 md:grid-cols-2">
+                
+                {/* Left: Donate */}
+                <div className="p-8 border-b md:border-b-0 md:border-r border-white/5 space-y-4">
+                    <div className="mb-4">
+                        <h4 className="flex items-center gap-2 text-green-400 font-bold uppercase text-xs tracking-wider mb-1"><CreditCard size={14} /> {t.donateTitle}</h4>
+                        <p className="text-[11px] text-gray-400">{t.donateDesc}</p>
+                    </div>
+                    <div className="grid grid-cols-3 gap-2">
+                        {['1€', '2€', '5€'].map(amount => (
+                            <button key={amount} className="py-3 rounded-xl border border-zinc-800 bg-zinc-900/50 text-white font-black hover:border-green-500 hover:text-green-400 transition-all shadow-sm">
+                                {amount}
+                            </button>
+                        ))}
+                    </div>
+                    <button className="w-full py-3 rounded-xl bg-green-600 text-white font-bold text-xs uppercase tracking-widest hover:bg-green-500 transition-all mt-2">PayPal</button>
+                </div>
+
+                {/* Right: Ads */}
+                <div className="p-8 space-y-4 bg-zinc-950/30">
+                    <div className="mb-4">
+                        <h4 className="flex items-center gap-2 text-blue-400 font-bold uppercase text-xs tracking-wider mb-1"><PlayCircle size={14} /> {t.adTitle}</h4>
+                        <p className="text-[11px] text-gray-400">{t.adDesc}</p>
+                    </div>
+                    <div className="h-24 bg-black/50 border border-zinc-800 border-dashed rounded-xl flex items-center justify-center text-zinc-600 text-xs font-medium">
+                        Ad Placeholder
+                    </div>
+                    <button disabled className="w-full py-3 rounded-xl border border-zinc-800 text-zinc-500 font-bold text-xs uppercase tracking-widest cursor-not-allowed opacity-50">{t.adButton}</button>
+                </div>
+
+            </div>
+          </div>
+        </div>
+      )}
+
       {/* LEFT SIDEBAR */}
       <aside className="w-64 border-r border-white/5 bg-zinc-950 flex flex-col p-4 z-20">
         <div className="mb-8 px-2 flex items-center gap-2">
@@ -752,12 +824,20 @@ export default function DigitrikPro() {
           <NavItem id="security" icon={Lock} label={t.security} />
         </nav>
 
-        {/* INFO BUTTON (NEW) */}
+        {/* INFO BUTTON */}
         <button 
           onClick={() => setShowInfoModal(true)}
-          className="flex items-center gap-3 p-3 rounded-xl text-zinc-500 hover:text-zinc-200 hover:bg-zinc-900 transition-all mb-4 text-xs font-bold uppercase tracking-wide border border-transparent hover:border-zinc-800"
+          className="flex items-center gap-3 p-3 rounded-xl text-zinc-500 hover:text-zinc-200 hover:bg-zinc-900 transition-all mb-1 text-xs font-bold uppercase tracking-wide border border-transparent hover:border-zinc-800"
         >
           <Info size={16} /> {t.infoMenu}
+        </button>
+
+        {/* SUPPORT BUTTON (NEW!) */}
+        <button 
+          onClick={() => setShowSupportModal(true)}
+          className="flex items-center gap-3 p-3 rounded-xl text-green-600/80 hover:text-green-400 hover:bg-green-900/10 transition-all mb-4 text-xs font-bold uppercase tracking-wide border border-transparent hover:border-green-500/20"
+        >
+          <Heart size={16} /> {t.supportBtn}
         </button>
 
         <div className={`mt-auto p-4 rounded-2xl border ${health.status === 'crit' ? 'bg-red-950/20 border-red-500/20' : 'bg-zinc-900 border-white/5'}`}>
