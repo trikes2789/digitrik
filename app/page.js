@@ -693,13 +693,24 @@ export default function DigitrikPro() {
                 <span className="absolute right-4 top-1/2 -translate-y-1/2 text-gray-600 text-xs font-bold pointer-events-none">.PDF</span>
               </div>
             </div>
-            <div className="bg-blue-900/10 border border-blue-600/10 rounded-2xl p-5 mb-8 flex gap-4">
+            <div className="bg-blue-900/10 border border-blue-600/10 rounded-2xl p-5 mb-6 flex gap-4">
               <Sparkles className="text-blue-500 shrink-0 mt-0.5" size={18} />
               <div className="space-y-1">
                 <span className="text-[10px] font-black text-blue-400 uppercase tracking-widest block">{t.didYouKnow} ({trickCuriosity.key})</span>
                 <p className="text-xs text-gray-300 italic leading-relaxed">{trickCuriosity.text}</p>
               </div>
             </div>
+            
+            {/* SUPPORT BUTTON IN MODAL (NEW) */}
+            <div className="mb-6 text-center">
+              <button 
+                onClick={() => setShowSupportModal(true)} 
+                className="text-[10px] uppercase font-bold text-green-500 hover:text-green-400 flex items-center justify-center gap-2 transition-colors"
+              >
+                <Heart size={12} /> {t.supportBtn}
+              </button>
+            </div>
+
             <div className="flex gap-3">
               <button onClick={() => setShowRenameModal(false)} className="flex-1 py-4 rounded-xl border border-white/5 hover:bg-white/5 text-gray-400 font-bold text-xs uppercase tracking-widest transition-all">{t.cancel}</button>
               <button onClick={handleConfirmDownload} className="flex-1 py-4 bg-blue-600 hover:bg-blue-500 text-white rounded-xl font-black text-xs uppercase tracking-widest shadow-lg shadow-blue-900/20 transition-all flex items-center justify-center gap-2"><Check size={16} /> {t.confirm}</button>
