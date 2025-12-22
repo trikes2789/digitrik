@@ -139,7 +139,7 @@ export default function DigitrikPro() {
     // Layout
     useHeader: false, headerText: '', headerAlign: 'center',
     useFooter: false, footerText: '', footerAlign: 'center',
-    usePagination: false, paginationAlign: 'right',
+    usePagination: false, paginationAlign: 'right', // Default a destra
     rotation: 0,
     // Matrix
     watermarkText: '', textOpacity: 0.25, textSize: 30,
@@ -350,7 +350,8 @@ export default function DigitrikPro() {
         // Disegna Header & Footer usando il sistema Smart
         if (config.useHeader) drawSmartText(config.headerText.toUpperCase(), 'header', config.headerAlign);
         if (config.useFooter) drawSmartText(config.footerText, 'footer', config.footerAlign);
-        if (config.usePagination) drawSmartText(`${idx + 1} / ${pages.length}`, 'footer', 'right');
+        // Paginazione ora usa l'allineamento dinamico
+        if (config.usePagination) drawSmartText(`${idx + 1} / ${pages.length}`, 'footer', config.paginationAlign);
 
         // --- Watermark (Coordinate relative standard) ---
         if (config.watermarkText) {
@@ -638,7 +639,21 @@ export default function DigitrikPro() {
                   )}
                 </div>
 
-                <Toggle label="Numerazione Pagine" checked={config.usePagination} onChange={v => setConfig({...config, usePagination: v})} icon={List} subLabel="Automatico in basso a destra" />
+                {/* PAGINATION SECTION */}
+                <div className="p-4 bg-zinc-900 rounded-xl border border-zinc-800 space-y-3">
+                  <Toggle label="Numerazione Pagine" checked={config.usePagination} onChange={v => setConfig({...config, usePagination: v})} icon={List} />
+                  {config.usePagination && (
+                    <div className="animate-in slide-in-from-top-2 fade-in">
+                      <div className="flex justify-between items-center mb-1 px-1">
+                        <span className="text-[10px] text-zinc-500 font-bold uppercase">Posizione</span>
+                      </div>
+                      <AlignSelector 
+                        value={config.paginationAlign} 
+                        onChange={(v) => setConfig({...config, paginationAlign: v})} 
+                      />
+                    </div>
+                  )}
+                </div>
               </div>
               
               <SectionTitle icon={RotateCw} title="Rotazione Pagine" />
