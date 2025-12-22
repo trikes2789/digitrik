@@ -102,8 +102,10 @@ const Toggle = ({ label, checked, onChange, icon: Icon, subLabel }) => (
         {subLabel && <span className="text-[10px] text-zinc-500 block">{subLabel}</span>}
       </div>
     </div>
-    <div className={`w-8 h-4 rounded-full relative transition-colors ${checked ? 'bg-blue-500' : 'bg-zinc-700'}`}>
-      <div className={`absolute top-0.5 w-3 h-3 bg-white rounded-full transition-transform ${checked ? 'left-4.5 translate-x-full' : 'left-0.5'}`} />
+    
+    {/* SWITCH CONTAINER FIX */}
+    <div className={`w-8 h-4 rounded-full relative transition-colors duration-300 ${checked ? 'bg-blue-500' : 'bg-zinc-700'}`}>
+      <div className={`absolute top-0.5 left-0.5 w-3 h-3 bg-white rounded-full transition-transform duration-300 ${checked ? 'translate-x-4' : 'translate-x-0'}`} />
     </div>
   </div>
 );
