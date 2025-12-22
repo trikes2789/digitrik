@@ -5,11 +5,11 @@ import Script from 'next/script';
 import { useDropzone } from 'react-dropzone';
 import { DragDropContext, Droppable, Draggable } from '@hello-pangea/dnd';
 import { 
-  FileText, Plus, Trash2, RefreshCcw, Wand2, GripVertical, 
+  FileText, Plus, Trash2, RefreshCcw, Wand2, 
   ImageIcon, Eye, EyeOff, AlignLeft, AlignCenter, AlignRight, 
   Sparkles, X, Check, RotateCw, Tag, Activity, ShieldAlert, 
   Feather, Layers, Printer, Ghost, Lock, Settings, LayoutTemplate, 
-  Image as IconImage, Shield, FileOutput, UploadCloud, Grid3X3
+  Image as IconImage, Shield, FileOutput, UploadCloud, Grid3X3, List
 } from 'lucide-react';
 
 // --- UTILS & DATA ---
@@ -66,6 +66,28 @@ const SmartSlider = ({ label, value, min, max, step = 1, unit = "", onChange }) 
   );
 };
 
+const AlignSelector = ({ value, onChange }) => (
+  <div className="flex bg-zinc-950 p-1 rounded-lg border border-zinc-800 mt-2">
+    {[
+      { id: 'left', icon: AlignLeft },
+      { id: 'center', icon: AlignCenter },
+      { id: 'right', icon: AlignRight }
+    ].map((opt) => (
+      <button
+        key={opt.id}
+        onClick={() => onChange(opt.id)}
+        className={`flex-1 flex items-center justify-center py-1.5 rounded-md transition-all ${
+          value === opt.id 
+            ? 'bg-zinc-800 text-blue-400 shadow-sm' 
+            : 'text-zinc-600 hover:text-zinc-400'
+        }`}
+      >
+        <opt.icon size={14} />
+      </button>
+    ))}
+  </div>
+);
+
 const Toggle = ({ label, checked, onChange, icon: Icon, subLabel }) => (
   <div 
     onClick={() => onChange(!checked)}
@@ -102,7 +124,7 @@ export default function DigitrikPro() {
   const [previewUrl, setPreviewUrl] = useState(null);
   const [isProcessing, setIsProcessing] = useState(false);
   const [toast, setToast] = useState(null);
-  
+   
   // SDK STATE (Load from CDN)
   const [isSdkReady, setIsSdkReady] = useState(false);
 
@@ -112,10 +134,10 @@ export default function DigitrikPro() {
   const [trickCuriosity, setTrickCuriosity] = useState({ key: 'PDF', text: 'Il formato PDF è nato nel 1993.' });
   const [isPreviewOpen, setIsPreviewOpen] = useState(true);
 
-  // CONFIGURATION STATE (Encryption Removed)
+  // CONFIGURATION STATE
   const [config, setConfig] = useState({
     // Layout
-    useHeader: false, headerText: '', headerAlign: 'left',
+    useHeader: false, headerText: '', headerAlign: 'center',
     useFooter: false, footerText: '', footerAlign: 'center',
     usePagination: false, paginationAlign: 'right',
     rotation: 0,
@@ -240,9 +262,9 @@ export default function DigitrikPro() {
           const lines = txt.split(/\r\n|\r|\n/);
           let y = 800;
           let x = 50;
-          
+           
           const maxLines = isPreview ? 60 : lines.length;
-          
+           
           for (let i = 0; i < maxLines; i++) {
              if (y < 50 && !isPreview) { page = doc.addPage(); y = 800; }
              page.drawText(lines[i].replace(/[^\x00-\x7F]/g, "?"), { x, y, size: fontSize, font: fontMono, color: rgb(0,0,0) });
@@ -258,16 +280,79 @@ export default function DigitrikPro() {
         logoImg = config.logoFile.type.includes('png') ? await doc.embedPng(logoBuf) : await doc.embedJpg(logoBuf);
       }
 
-      // Apply Overlays
+      // --- APPLICAZIONE OVERLAY E ROTAZIONE (SMART SYSTEM) ---
       const pages = doc.getPages();
       pages.forEach((p, idx) => {
         const { width, height } = p.getSize();
-        if (config.rotation) p.setRotation(degrees(config.rotation));
+        
+        // Applica rotazione alla pagina
+        const rotation = config.rotation;
+        p.setRotation(degrees(rotation));
 
-        if (config.useHeader) p.drawText(config.headerText.toUpperCase(), { x: 40, y: height - 30, size: 9, font: fontBold, color: rgb(0.2,0.2,0.2) });
-        if (config.useFooter) p.drawText(config.footerText, { x: width/2 - 20, y: 30, size: 9, font: fontNormal, color: rgb(0.2,0.2,0.2) });
-        if (config.usePagination) p.drawText(`${idx+1} / ${pages.length}`, { x: width - 60, y: 30, size: 9, font: fontNormal });
+        // --- Funzione Helper per disegnare testo che rispetta la rotazione visiva ---
+        const drawSmartText = (text, type, alignment) => {
+          if (!text) return;
+          
+          const size = 9;
+          const fontToUse = type === 'header' ? fontBold : fontNormal;
+          const textWidth = fontToUse.widthOfTextAtSize(text, size);
+          const margin = 30; // Margine dal bordo
 
+          let x, y, textRotate;
+
+          // Calcolo coordinate in base alla rotazione della pagina
+          switch (rotation) {
+            case 0: // Standard
+              textRotate = 0;
+              y = type === 'header' ? height - margin : margin;
+              if (alignment === 'left') x = 40;
+              else if (alignment === 'right') x = width - 40 - textWidth;
+              else x = (width / 2) - (textWidth / 2);
+              break;
+
+            case 90: // Ruotato 90° orario (Il "Top" visivo è il lato sinistro originale)
+              textRotate = 90;
+              x = type === 'header' ? margin : width - margin;
+              // In 90°, l'asse Y visivo corre lungo l'asse X originale
+              if (alignment === 'left') y = 40; 
+              else if (alignment === 'right') y = height - 40 - textWidth;
+              else y = (height / 2) - (textWidth / 2);
+              break;
+
+            case 180: // Capovolto
+              textRotate = 180;
+              y = type === 'header' ? margin : height - margin;
+              // A 180°, destra e sinistra si invertono matematicamente
+              if (alignment === 'left') x = width - 40; 
+              else if (alignment === 'right') x = 40 + textWidth;
+              else x = (width / 2) + (textWidth / 2);
+              break;
+
+            case 270: // Ruotato 270° (o -90°)
+              textRotate = 270;
+              x = type === 'header' ? width - margin : margin;
+              if (alignment === 'left') y = height - 40;
+              else if (alignment === 'right') y = 40 + textWidth;
+              else y = (height / 2) + (textWidth / 2);
+              break;
+            
+            default: break;
+          }
+
+          p.drawText(text, {
+            x, y, size,
+            font: fontToUse,
+            color: rgb(0.2, 0.2, 0.2),
+            rotate: degrees(textRotate),
+          });
+        };
+
+        // Disegna Header & Footer usando il sistema Smart
+        if (config.useHeader) drawSmartText(config.headerText.toUpperCase(), 'header', config.headerAlign);
+        if (config.useFooter) drawSmartText(config.footerText, 'footer', config.footerAlign);
+        if (config.usePagination) drawSmartText(`${idx + 1} / ${pages.length}`, 'footer', 'right');
+
+        // --- Watermark (Coordinate relative standard) ---
         if (config.watermarkText) {
           const textW = fontBold.widthOfTextAtSize(config.watermarkText, config.textSize);
           if (config.useWatermark) {
@@ -306,9 +391,7 @@ export default function DigitrikPro() {
   useEffect(() => {
     let t;
     const updatePreview = async () => {
-      // Aspetta che la libreria sia pronta
       if (!isSdkReady || !window.PDFLib) return;
-
       const pdfBytes = await generatePdf(true);
       if (pdfBytes) {
         const blob = new Blob([pdfBytes], { type: 'application/pdf' });
@@ -319,7 +402,7 @@ export default function DigitrikPro() {
     };
     t = setTimeout(updatePreview, 800);
     return () => clearTimeout(t);
-  }, [files, config, isSdkReady]); // Rerun when SDK is ready
+  }, [files, config, isSdkReady]);
 
   const handleExportClick = () => {
     if (files.length === 0) {
@@ -514,17 +597,51 @@ export default function DigitrikPro() {
             <div className="space-y-6 animate-in fade-in slide-in-from-right-2">
               <SectionTitle icon={LayoutTemplate} title="Struttura Pagina" />
               <div className="space-y-4">
+                
+                {/* HEADER SECTION */}
                 <div className="p-4 bg-zinc-900 rounded-xl border border-zinc-800 space-y-3">
                   <Toggle label="Intestazione" checked={config.useHeader} onChange={v => setConfig({...config, useHeader: v})} icon={AlignLeft} />
-                  {config.useHeader && <input type="text" placeholder="Testo Header..." value={config.headerText} onChange={e => setConfig({...config, headerText: e.target.value})} className="w-full bg-zinc-950 border border-zinc-800 rounded-lg p-2 text-xs text-white outline-none" />}
+                  {config.useHeader && (
+                    <div className="animate-in slide-in-from-top-2 fade-in">
+                      <input 
+                        type="text" 
+                        placeholder="Testo Header..." 
+                        value={config.headerText} 
+                        onChange={e => setConfig({...config, headerText: e.target.value})} 
+                        className="w-full bg-zinc-950 border border-zinc-800 rounded-lg p-2 text-xs text-white outline-none mb-1" 
+                      />
+                      <AlignSelector 
+                        value={config.headerAlign} 
+                        onChange={(v) => setConfig({...config, headerAlign: v})} 
+                      />
+                    </div>
+                  )}
                 </div>
+
+                {/* FOOTER SECTION */}
                 <div className="p-4 bg-zinc-900 rounded-xl border border-zinc-800 space-y-3">
                   <Toggle label="Piè di Pagina" checked={config.useFooter} onChange={v => setConfig({...config, useFooter: v})} icon={AlignRight} />
-                  {config.useFooter && <input type="text" placeholder="Testo Footer..." value={config.footerText} onChange={e => setConfig({...config, footerText: e.target.value})} className="w-full bg-zinc-950 border border-zinc-800 rounded-lg p-2 text-xs text-white outline-none" />}
+                  {config.useFooter && (
+                    <div className="animate-in slide-in-from-top-2 fade-in">
+                      <input 
+                        type="text" 
+                        placeholder="Testo Footer..." 
+                        value={config.footerText} 
+                        onChange={e => setConfig({...config, footerText: e.target.value})} 
+                        className="w-full bg-zinc-950 border border-zinc-800 rounded-lg p-2 text-xs text-white outline-none mb-1" 
+                      />
+                      <AlignSelector 
+                        value={config.footerAlign} 
+                        onChange={(v) => setConfig({...config, footerAlign: v})} 
+                      />
+                    </div>
+                  )}
                 </div>
+
                 <Toggle label="Numerazione Pagine" checked={config.usePagination} onChange={v => setConfig({...config, usePagination: v})} icon={List} subLabel="Automatico in basso a destra" />
               </div>
-              <SectionTitle icon={RotateCw} title="Correzione" />
+              
+              <SectionTitle icon={RotateCw} title="Rotazione Pagine" />
               <div className="grid grid-cols-4 gap-2">
                 {[0, 90, 180, 270].map(deg => (
                   <button key={deg} onClick={() => setConfig({...config, rotation: deg})} className={`py-2 rounded-lg text-xs font-bold border transition-all ${config.rotation === deg ? 'bg-blue-600 border-blue-600 text-white' : 'bg-zinc-900 border-zinc-800 text-zinc-500 hover:text-zinc-300'}`}>{deg}°</button>
@@ -565,9 +682,9 @@ export default function DigitrikPro() {
               </div>
               {config.logoFile && (
                 <div className="space-y-4 pt-2">
-                   <Toggle label="Attiva Logo" checked={config.useLogo} onChange={v => setConfig({...config, useLogo: v})} />
-                   <SmartSlider label="Dimensione Logo" value={config.logoSize} min={50} max={300} onChange={v => setConfig({...config, logoSize: parseInt(v)})} unit="px" />
-                   <SmartSlider label="Opacità Logo" value={Math.round(config.logoOpacity*100)} min={5} max={100} onChange={v => setConfig({...config, logoOpacity: v/100})} unit="%" />
+                    <Toggle label="Attiva Logo" checked={config.useLogo} onChange={v => setConfig({...config, useLogo: v})} />
+                    <SmartSlider label="Dimensione Logo" value={config.logoSize} min={50} max={300} onChange={v => setConfig({...config, logoSize: parseInt(v)})} unit="px" />
+                    <SmartSlider label="Opacità Logo" value={Math.round(config.logoOpacity*100)} min={5} max={100} onChange={v => setConfig({...config, logoOpacity: v/100})} unit="%" />
                 </div>
               )}
             </div>
@@ -619,6 +736,3 @@ export default function DigitrikPro() {
     </div>
   );
 }
-
-// Icon helper
-const List = ({size, className}) => (<svg xmlns="http://www.w3.org/2000/svg" width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className={className}><line x1="8" y1="6" x2="21" y2="6"></line><line x1="8" y1="12" x2="21" y2="12"></line><line x1="8" y1="18" x2="21" y2="18"></line><line x1="3" y1="6" x2="3.01" y2="6"></line><line x1="3" y1="12" x2="3.01" y2="12"></line><line x1="3" y1="18" x2="3.01" y2="18"></line></svg>);
