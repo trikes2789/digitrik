@@ -346,7 +346,7 @@ const Toast = ({ message, type, onClose }) => (
 // --- MAIN APP ---
 export default function DigitrikPro() {
   // CORE STATE
-  const [lang, setLang] = useState('it');
+  const [lang, setLang] = useState('en');
   const t = TRANSLATIONS[lang]; // Helper per le traduzioni correnti
 
   const [files, setFiles] = useState([]);
