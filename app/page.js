@@ -36,7 +36,7 @@ const TRANSLATIONS = {
     // Dropzone
     dropTitle: "Trascina qui i tuoi documenti",
     dropDesc: "Supportiamo PDF, Immagini HQ e file di testo. Il motore Digitrik si occuperà del resto.",
-    add: "Aggiungi",
+    add: "Aggiungi File",
     unsupported: "File non supportati ignorati.",
     added: "file aggiunti.",
     preview: "Anteprima Live Output",
@@ -131,7 +131,7 @@ const TRANSLATIONS = {
     // Dropzone
     dropTitle: "Drop your documents here",
     dropDesc: "We support PDF, HQ Images, and text files. The Digitrik engine handles the rest.",
-    add: "Add",
+    add: "Add File",
     unsupported: "Unsupported files ignored.",
     added: "files added.",
     // Preview
@@ -782,22 +782,28 @@ export default function DigitrikPro() {
             ) : (
               <div className="p-8">
                 <DragDropContext onDragEnd={(res) => { if(!res.destination) return; const items = Array.from(files); const [reordered] = items.splice(res.source.index, 1); items.splice(res.destination.index, 0, reordered); setFiles(items); }}>
-                  <Droppable droppableId="list" direction="horizontal">
+                  <Droppable droppableId="list" direction="vertical">
                     {(provided) => (
-                      <div {...provided.droppableProps} ref={provided.innerRef} className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+                      <div {...provided.droppableProps} ref={provided.innerRef} className="flex flex-col gap-3">
                         {files.map((f, i) => (
                           <Draggable key={f.id} draggableId={f.id} index={i}>
                             {(provided, snapshot) => (
                               <div ref={provided.innerRef} {...provided.draggableProps} {...provided.dragHandleProps} className={`bg-zinc-950 border border-white/5 p-4 rounded-xl flex items-center gap-4 group hover:border-blue-500/30 transition-all ${snapshot.isDragging ? 'shadow-2xl ring-2 ring-blue-500 rotate-2' : ''}`}>
+                                <span className="text-zinc-500 font-mono text-xs font-bold w-6 text-center shrink-0">{i + 1}.</span>
                                 <div className="w-10 h-10 bg-zinc-900 rounded-lg flex items-center justify-center shrink-0"><FileText size={20} className="text-blue-500" /></div>
-                                <div className="min-w-0 flex-1"><p className="text-xs font-bold text-zinc-200 truncate">{f.file.name}</p><p className="text-[10px] text-zinc-500 font-mono">{(f.file.size/1024).toFixed(1)} KB</p></div>
-                                <button onClick={(e) => { e.stopPropagation(); setFiles(files.filter(x => x.id !== f.id)); }} className="p-2 hover:text-red-500 text-zinc-600 transition-colors"><Trash2 size={16} /></button>
+                                <div className="min-w-0 flex-1 pr-2"><p className="text-xs font-bold text-zinc-200 truncate">{f.file.name}</p><p className="text-[10px] text-zinc-500 font-mono">{(f.file.size/1024).toFixed(1)} KB</p></div>
+                                <button 
+                                  onClick={(e) => { e.stopPropagation(); setFiles(files.filter(x => x.id !== f.id)); }} 
+                                  className="p-2 hover:bg-red-500/10 hover:text-red-500 text-zinc-600 rounded-lg transition-colors shrink-0 z-10"
+                                >
+                                  <Trash2 size={16} />
+                                </button>
                               </div>
                             )}
                           </Draggable>
                         ))}
                         {provided.placeholder}
-                        <div className="border border-dashed border-zinc-800 rounded-xl flex flex-col items-center justify-center p-4 hover:bg-zinc-900/50 transition-colors cursor-pointer text-zinc-600 hover:text-zinc-400"><Plus size={24} /><span className="text-[10px] font-bold mt-2 uppercase">{t.add}</span></div>
+                        <div className="border border-dashed border-zinc-800 rounded-xl flex flex-row gap-3 items-center justify-center p-4 hover:bg-zinc-900/50 transition-colors cursor-pointer text-zinc-600 hover:text-zinc-400 mt-2"><Plus size={20} /><span className="text-[10px] font-bold uppercase">{t.add}</span></div>
                       </div>
                     )}
                   </Droppable>
