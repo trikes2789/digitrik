@@ -9,18 +9,187 @@ import {
   ImageIcon, Eye, EyeOff, AlignLeft, AlignCenter, AlignRight, 
   Sparkles, X, Check, RotateCw, Tag, Activity, ShieldAlert, 
   Feather, Layers, Printer, Ghost, Lock, Settings, LayoutTemplate, 
-  Image as IconImage, Shield, FileOutput, UploadCloud, Grid3X3, List
+  Image as IconImage, Shield, FileOutput, UploadCloud, Grid3X3, List, Globe
 } from 'lucide-react';
 
-// --- UTILS & DATA ---
-const fileEncyclopedia = {
-  "AI": { desc: "Vettoriale Adobe.", curiosity: "Rinominabile in PDF.", type: "Vettoriale" },
-  "CSV": { desc: "Dati testuali.", curiosity: "Supportato: convertito in tabulato.", type: "Dati" },
-  "DOCX": { desc: "Word XML.", curiosity: "È uno ZIP rinominato.", type: "Documento" },
-  "JPG": { desc: "Foto compressa.", curiosity: "Soggetto a degrado digitale.", type: "Immagine" },
-  "PDF": { desc: "Portable Document.", curiosity: "Standard ISO dal 2008.", type: "Universale" },
-  "PNG": { desc: "Web Lossless.", curiosity: "Supporta trasparenza alpha.", type: "Immagine" },
-  "TXT": { desc: "Testo puro.", curiosity: "Renderizzato con font Courier.", type: "Testo" }
+// --- TRANSLATIONS & DATA ---
+const TRANSLATIONS = {
+  it: {
+    // Sidebar & Nav
+    appName: "Pro Suite",
+    workspace: "Spazio di Lavoro",
+    files: "Gestione File",
+    layout: "Layout & Export",
+    branding: "Brand & Security",
+    watermark: "Watermark & Logo",
+    security: "Ghost Mode",
+    health: "Salute Sistema",
+    weight: "Peso Stimato",
+    // Header
+    fileManager: "Gestione File",
+    layoutConfig: "Configurazione Layout",
+    brandingConfig: "Personalizzazione Brand",
+    securityConfig: "Sicurezza",
+    filesLoaded: "File Caricati",
+    // Dropzone
+    dropTitle: "Trascina qui i tuoi documenti",
+    dropDesc: "Supportiamo PDF, Immagini HQ e file di testo. Il motore Digitrik si occuperà del resto.",
+    add: "Aggiungi",
+    unsupported: "File non supportati ignorati.",
+    added: "file aggiunti.",
+    // Preview
+    preview: "Anteprima Live Output",
+    previewHidden: "(Nascosta)",
+    rendering: "Rendering Real-time",
+    // Actions
+    mainAction: "Azione Principale",
+    actionDesc: "Cosa vuoi fare con i file caricati?",
+    actConvert: "Converti in PDF",
+    actMerge: "Unisci File (Merge)",
+    actExtract: "Estrai Pagine",
+    rangeLabel: "Range Pagine (es. 1-3, 5)",
+    // Layout
+    pageStruct: "Struttura Pagina",
+    header: "Intestazione",
+    headerPlace: "Testo Header...",
+    footer: "Piè di Pagina",
+    footerPlace: "Testo Footer...",
+    pagination: "Numerazione Pagine",
+    paginationSub: "Posizione Automatica",
+    position: "Posizione",
+    rotation: "Rotazione Pagine",
+    // Watermark
+    textWatermark: "Filigrana Testuale",
+    watermarkPlace: "Testo filigrana (es. BOZZA)",
+    optRibbon: "Nastro (Diagonale)",
+    optGrid: "Griglia Fitta",
+    optSecurity: "Security Alert",
+    opacity: "Opacità",
+    size: "Grandezza",
+    corpLogo: "Logo Aziendale",
+    dragLogo: "Trascina Logo Qui",
+    logoLoaded: "Logo caricato.",
+    activeLogo: "Attiva Logo",
+    logoSize: "Dimensione Logo",
+    logoOpacity: "Opacità Logo",
+    // Security
+    ghostProto: "Ghost Protocol",
+    ghostDesc: "Rimuove metadati, autore e data creazione per l'anonimato.",
+    publicMeta: "Metadati Pubblici",
+    docTitle: "Titolo Documento",
+    docAuthor: "Autore",
+    // Export
+    exportBtn: "Esporta Documento",
+    processing: "Elaborazione...",
+    loadingCore: "Caricamento Core...",
+    noFiles: "Nessun file da esportare!",
+    downloadOk: "Download completato con successo!",
+    // Modal
+    finalTrick: "Finalizza Trick",
+    chooseName: "Scegli il nome del tuo file",
+    fileName: "Nome File",
+    didYouKnow: "Lo sapevi?",
+    cancel: "Annulla",
+    confirm: "Conferma & Scarica",
+    // Encyclopedia
+    enc: {
+      AI: { desc: "Vettoriale Adobe.", curiosity: "Rinominabile in PDF.", type: "Vettoriale" },
+      CSV: { desc: "Dati testuali.", curiosity: "Convertito in tabulato.", type: "Dati" },
+      DOCX: { desc: "Word XML.", curiosity: "È uno ZIP rinominato.", type: "Documento" },
+      JPG: { desc: "Foto compressa.", curiosity: "Soggetto a degrado.", type: "Immagine" },
+      PDF: { desc: "Portable Document.", curiosity: "Standard ISO dal 2008.", type: "Universale" },
+      PNG: { desc: "Web Lossless.", curiosity: "Supporta trasparenza.", type: "Immagine" },
+      TXT: { desc: "Testo puro.", curiosity: "Font Courier.", type: "Testo" }
+    }
+  },
+  en: {
+    // Sidebar & Nav
+    appName: "Pro Suite",
+    workspace: "Workspace",
+    files: "File Manager",
+    layout: "Layout & Export",
+    branding: "Brand & Security",
+    watermark: "Watermark & Logo",
+    security: "Ghost Mode",
+    health: "System Health",
+    weight: "Est. Weight",
+    // Header
+    fileManager: "File Manager",
+    layoutConfig: "Layout Config",
+    brandingConfig: "Brand Customization",
+    securityConfig: "Security",
+    filesLoaded: "Files Loaded",
+    // Dropzone
+    dropTitle: "Drop your documents here",
+    dropDesc: "We support PDF, HQ Images, and text files. The Digitrik engine handles the rest.",
+    add: "Add",
+    unsupported: "Unsupported files ignored.",
+    added: "files added.",
+    // Preview
+    preview: "Live Output Preview",
+    previewHidden: "(Hidden)",
+    rendering: "Real-time Rendering",
+    // Actions
+    mainAction: "Main Action",
+    actionDesc: "What to do with uploaded files?",
+    actConvert: "Convert to PDF",
+    actMerge: "Merge Files",
+    actExtract: "Extract Pages",
+    rangeLabel: "Page Range (e.g., 1-3, 5)",
+    // Layout
+    pageStruct: "Page Structure",
+    header: "Header",
+    headerPlace: "Header text...",
+    footer: "Footer",
+    footerPlace: "Footer text...",
+    pagination: "Page Numbering",
+    paginationSub: "Automatic Position",
+    position: "Position",
+    rotation: "Page Rotation",
+    // Watermark
+    textWatermark: "Text Watermark",
+    watermarkPlace: "Watermark text (e.g. DRAFT)",
+    optRibbon: "Ribbon (Diagonal)",
+    optGrid: "Dense Grid",
+    optSecurity: "Security Alert",
+    opacity: "Opacity",
+    size: "Size",
+    corpLogo: "Corporate Logo",
+    dragLogo: "Drag Logo Here",
+    logoLoaded: "Logo loaded.",
+    activeLogo: "Enable Logo",
+    logoSize: "Logo Size",
+    logoOpacity: "Logo Opacity",
+    // Security
+    ghostProto: "Ghost Protocol",
+    ghostDesc: "Removes metadata, author, and dates for total anonymity.",
+    publicMeta: "Public Metadata",
+    docTitle: "Document Title",
+    docAuthor: "Author",
+    // Export
+    exportBtn: "Export Document",
+    processing: "Processing...",
+    loadingCore: "Loading Core...",
+    noFiles: "No files to export!",
+    downloadOk: "Download completed successfully!",
+    // Modal
+    finalTrick: "Finalize Trick",
+    chooseName: "Choose your filename",
+    fileName: "File Name",
+    didYouKnow: "Did you know?",
+    cancel: "Cancel",
+    confirm: "Confirm & Download",
+    // Encyclopedia
+    enc: {
+      AI: { desc: "Adobe Vector.", curiosity: "Can be renamed to PDF.", type: "Vector" },
+      CSV: { desc: "Text Data.", curiosity: "Converted to tables.", type: "Data" },
+      DOCX: { desc: "Word XML.", curiosity: "It's a renamed ZIP.", type: "Document" },
+      JPG: { desc: "Compressed Photo.", curiosity: "Subject to decay.", type: "Image" },
+      PDF: { desc: "Portable Document.", curiosity: "ISO Standard since 2008.", type: "Universal" },
+      PNG: { desc: "Web Lossless.", curiosity: "Supports alpha channel.", type: "Image" },
+      TXT: { desc: "Pure Text.", curiosity: "Courier Font.", type: "Text" }
+    }
+  }
 };
 
 const compressImage = (file, quality = 0.7, scale = 1) => {
@@ -103,7 +272,7 @@ const Toggle = ({ label, checked, onChange, icon: Icon, subLabel }) => (
       </div>
     </div>
     
-    {/* SWITCH CONTAINER FIX */}
+    {/* SWITCH CONTAINER */}
     <div className={`w-8 h-4 rounded-full relative transition-colors duration-300 ${checked ? 'bg-blue-500' : 'bg-zinc-700'}`}>
       <div className={`absolute top-0.5 left-0.5 w-3 h-3 bg-white rounded-full transition-transform duration-300 ${checked ? 'translate-x-4' : 'translate-x-0'}`} />
     </div>
@@ -121,6 +290,9 @@ const Toast = ({ message, type, onClose }) => (
 // --- MAIN APP ---
 export default function DigitrikPro() {
   // CORE STATE
+  const [lang, setLang] = useState('it');
+  const t = TRANSLATIONS[lang]; // Helper per le traduzioni correnti
+
   const [files, setFiles] = useState([]);
   const [activeTab, setActiveTab] = useState('files'); 
   const [previewUrl, setPreviewUrl] = useState(null);
@@ -133,7 +305,7 @@ export default function DigitrikPro() {
   // UI STATE
   const [showRenameModal, setShowRenameModal] = useState(false);
   const [tempFilename, setTempFilename] = useState("Digitrik_Result");
-  const [trickCuriosity, setTrickCuriosity] = useState({ key: 'PDF', text: 'Il formato PDF è nato nel 1993.' });
+  const [trickCuriosity, setTrickCuriosity] = useState({ key: 'PDF', text: '' });
   const [isPreviewOpen, setIsPreviewOpen] = useState(true);
 
   // CONFIGURATION STATE
@@ -141,7 +313,7 @@ export default function DigitrikPro() {
     // Layout
     useHeader: false, headerText: '', headerAlign: 'center',
     useFooter: false, footerText: '', footerAlign: 'center',
-    usePagination: false, paginationAlign: 'right', // Default a destra
+    usePagination: false, paginationAlign: 'right', 
     rotation: 0,
     // Matrix
     watermarkText: '', textOpacity: 0.25, textSize: 30,
@@ -182,26 +354,24 @@ export default function DigitrikPro() {
 
   const onDrop = useCallback(accepted => {
     const valid = accepted.filter(f => ['application/pdf', 'image/png', 'image/jpeg', 'image/jpg', 'text/plain', 'text/csv'].includes(f.type) || f.name.endsWith('.csv'));
-    if (valid.length < accepted.length) showToast("File non supportati ignorati.", "error");
+    if (valid.length < accepted.length) showToast(t.unsupported, "error");
     setFiles(prev => [...prev, ...valid.map(f => ({ id: Math.random().toString(36), file: f }))]);
-    if (valid.length > 0) showToast(`${valid.length} file aggiunti.`);
-  }, []);
+    if (valid.length > 0) showToast(`${valid.length} ${t.added}`);
+  }, [lang]); // Dipendenza lang per il toast
 
   const { getRootProps, getInputProps, isDragActive } = useDropzone({ onDrop, noClick: true });
 
   const onLogoDrop = useCallback(accepted => {
     if (accepted[0]) {
       setConfig(prev => ({ ...prev, logoFile: accepted[0], useLogo: true }));
-      showToast("Logo caricato.");
+      showToast(t.logoLoaded);
     }
-  }, []);
+  }, [lang]);
   const { getRootProps: getLogoProps, getInputProps: getLogoInput } = useDropzone({ onDrop: onLogoDrop, accept: {'image/*': []}, multiple: false });
 
-  // --- LOGIC: PDF ENGINE (PURE WINDOW ACCESS) ---
+  // --- LOGIC: PDF ENGINE ---
   const generatePdf = async (isPreview = false) => {
     if (files.length === 0 || !window.PDFLib) return null;
-    
-    // ACCESS GLOBAL WINDOW OBJECT FROM CDN
     const { PDFDocument, StandardFonts, rgb, degrees } = window.PDFLib;
 
     try {
@@ -286,76 +456,57 @@ export default function DigitrikPro() {
       const pages = doc.getPages();
       pages.forEach((p, idx) => {
         const { width, height } = p.getSize();
-        
-        // Applica rotazione alla pagina
         const rotation = config.rotation;
         p.setRotation(degrees(rotation));
 
-        // --- Funzione Helper per disegnare testo che rispetta la rotazione visiva ---
+        // Helper per disegno "Smart"
         const drawSmartText = (text, type, alignment) => {
           if (!text) return;
-          
           const size = 9;
           const fontToUse = type === 'header' ? fontBold : fontNormal;
           const textWidth = fontToUse.widthOfTextAtSize(text, size);
-          const margin = 30; // Margine dal bordo
+          const margin = 30;
 
           let x, y, textRotate;
 
-          // Calcolo coordinate in base alla rotazione della pagina
           switch (rotation) {
-            case 0: // Standard
+            case 0: 
               textRotate = 0;
               y = type === 'header' ? height - margin : margin;
               if (alignment === 'left') x = 40;
               else if (alignment === 'right') x = width - 40 - textWidth;
               else x = (width / 2) - (textWidth / 2);
               break;
-
-            case 90: // Ruotato 90° orario (Il "Top" visivo è il lato sinistro originale)
+            case 90:
               textRotate = 90;
               x = type === 'header' ? margin : width - margin;
-              // In 90°, l'asse Y visivo corre lungo l'asse X originale
               if (alignment === 'left') y = 40; 
               else if (alignment === 'right') y = height - 40 - textWidth;
               else y = (height / 2) - (textWidth / 2);
               break;
-
-            case 180: // Capovolto
+            case 180:
               textRotate = 180;
               y = type === 'header' ? margin : height - margin;
-              // A 180°, destra e sinistra si invertono matematicamente
               if (alignment === 'left') x = width - 40; 
               else if (alignment === 'right') x = 40 + textWidth;
               else x = (width / 2) + (textWidth / 2);
               break;
-
-            case 270: // Ruotato 270° (o -90°)
+            case 270:
               textRotate = 270;
               x = type === 'header' ? width - margin : margin;
               if (alignment === 'left') y = height - 40;
               else if (alignment === 'right') y = 40 + textWidth;
               else y = (height / 2) + (textWidth / 2);
               break;
-            
             default: break;
           }
-
-          p.drawText(text, {
-            x, y, size,
-            font: fontToUse,
-            color: rgb(0.2, 0.2, 0.2),
-            rotate: degrees(textRotate),
-          });
+          p.drawText(text, { x, y, size, font: fontToUse, color: rgb(0.2, 0.2, 0.2), rotate: degrees(textRotate) });
         };
 
-        // Disegna Header & Footer usando il sistema Smart
         if (config.useHeader) drawSmartText(config.headerText.toUpperCase(), 'header', config.headerAlign);
         if (config.useFooter) drawSmartText(config.footerText, 'footer', config.footerAlign);
-        // Paginazione ora usa l'allineamento dinamico
         if (config.usePagination) drawSmartText(`${idx + 1} / ${pages.length}`, 'footer', config.paginationAlign);
 
-        // --- Watermark (Coordinate relative standard) ---
         if (config.watermarkText) {
           const textW = fontBold.widthOfTextAtSize(config.watermarkText, config.textSize);
           if (config.useWatermark) {
@@ -405,16 +556,16 @@ export default function DigitrikPro() {
     };
     t = setTimeout(updatePreview, 800);
     return () => clearTimeout(t);
-  }, [files, config, isSdkReady]);
+  }, [files, config, isSdkReady, lang]);
 
   const handleExportClick = () => {
     if (files.length === 0) {
-      showToast("Nessun file da esportare!", "error");
+      showToast(t.noFiles, "error");
       return;
     }
-    const keys = Object.keys(fileEncyclopedia);
+    const keys = Object.keys(t.enc);
     const randomKey = keys[Math.floor(Math.random() * keys.length)];
-    setTrickCuriosity({ key: randomKey, text: fileEncyclopedia[randomKey].curiosity });
+    setTrickCuriosity({ key: randomKey, text: t.enc[randomKey].curiosity });
     setTempFilename("Digitrik_Result");
     setShowRenameModal(true);
   };
@@ -430,7 +581,7 @@ export default function DigitrikPro() {
       link.href = url;
       link.download = `${tempFilename}.pdf`;
       link.click();
-      showToast("Download completato con successo!");
+      showToast(t.downloadOk);
     }
     setIsProcessing(false);
   };
@@ -460,11 +611,11 @@ export default function DigitrikPro() {
           <div className="bg-[#0a0a0a] border border-blue-600/30 rounded-[2rem] w-[90%] max-w-lg p-8 shadow-[0_0_50px_rgba(37,99,235,0.1)] relative">
             <div className="flex items-center gap-3 mb-6">
               <div className="bg-blue-600/10 p-3 rounded-full text-blue-500"><Wand2 size={24} /></div>
-              <div><h3 className="text-xl font-black italic text-white uppercase tracking-wider">Finalizza Trick</h3><p className="text-[11px] text-gray-500 font-bold uppercase">Scegli il nome del tuo file</p></div>
+              <div><h3 className="text-xl font-black italic text-white uppercase tracking-wider">{t.finalTrick}</h3><p className="text-[11px] text-gray-500 font-bold uppercase">{t.chooseName}</p></div>
               <button onClick={() => setShowRenameModal(false)} className="absolute top-6 right-6 text-gray-600 hover:text-white transition-colors"><X size={20} /></button>
             </div>
             <div className="space-y-2 mb-8">
-              <label className="text-xs font-bold text-gray-400 uppercase ml-2">Nome File</label>
+              <label className="text-xs font-bold text-gray-400 uppercase ml-2">{t.fileName}</label>
               <div className="relative">
                 <input type="text" value={tempFilename} onChange={(e) => setTempFilename(e.target.value)} onKeyDown={(e) => e.key === 'Enter' && handleConfirmDownload()} autoFocus className="w-full bg-[#111] border border-white/10 rounded-xl p-4 text-white font-medium outline-none focus:border-blue-600 transition-all shadow-inner" />
                 <span className="absolute right-4 top-1/2 -translate-y-1/2 text-gray-600 text-xs font-bold pointer-events-none">.PDF</span>
@@ -473,13 +624,13 @@ export default function DigitrikPro() {
             <div className="bg-blue-900/10 border border-blue-600/10 rounded-2xl p-5 mb-8 flex gap-4">
               <Sparkles className="text-blue-500 shrink-0 mt-0.5" size={18} />
               <div className="space-y-1">
-                <span className="text-[10px] font-black text-blue-400 uppercase tracking-widest block">Lo sapevi? ({trickCuriosity.key})</span>
+                <span className="text-[10px] font-black text-blue-400 uppercase tracking-widest block">{t.didYouKnow} ({trickCuriosity.key})</span>
                 <p className="text-xs text-gray-300 italic leading-relaxed">{trickCuriosity.text}</p>
               </div>
             </div>
             <div className="flex gap-3">
-              <button onClick={() => setShowRenameModal(false)} className="flex-1 py-4 rounded-xl border border-white/5 hover:bg-white/5 text-gray-400 font-bold text-xs uppercase tracking-widest transition-all">Annulla</button>
-              <button onClick={handleConfirmDownload} className="flex-1 py-4 bg-blue-600 hover:bg-blue-500 text-white rounded-xl font-black text-xs uppercase tracking-widest shadow-lg shadow-blue-900/20 transition-all flex items-center justify-center gap-2"><Check size={16} /> Conferma & Scarica</button>
+              <button onClick={() => setShowRenameModal(false)} className="flex-1 py-4 rounded-xl border border-white/5 hover:bg-white/5 text-gray-400 font-bold text-xs uppercase tracking-widest transition-all">{t.cancel}</button>
+              <button onClick={handleConfirmDownload} className="flex-1 py-4 bg-blue-600 hover:bg-blue-500 text-white rounded-xl font-black text-xs uppercase tracking-widest shadow-lg shadow-blue-900/20 transition-all flex items-center justify-center gap-2"><Check size={16} /> {t.confirm}</button>
             </div>
           </div>
         </div>
@@ -491,29 +642,36 @@ export default function DigitrikPro() {
           <div className="w-8 h-8 bg-blue-600 rounded-lg flex items-center justify-center">
             <Wand2 size={18} className="text-white" />
           </div>
-          <div><h1 className="text-lg font-black italic tracking-tighter leading-none">DIGITRIK</h1><span className="text-[10px] font-bold text-blue-500 uppercase tracking-[0.2em]">Pro Suite</span></div>
+          <div><h1 className="text-lg font-black italic tracking-tighter leading-none">DIGITRIK</h1><span className="text-[10px] font-bold text-blue-500 uppercase tracking-[0.2em]">{t.appName}</span></div>
         </div>
+        
+        {/* LANG SWITCHER */}
+        <div className="flex bg-zinc-900 rounded-lg p-1 mb-6 border border-zinc-800">
+          <button onClick={() => setLang('it')} className={`flex-1 py-1 text-[10px] font-bold uppercase rounded ${lang === 'it' ? 'bg-zinc-700 text-white' : 'text-zinc-500 hover:text-zinc-300'}`}>IT</button>
+          <button onClick={() => setLang('en')} className={`flex-1 py-1 text-[10px] font-bold uppercase rounded ${lang === 'en' ? 'bg-zinc-700 text-white' : 'text-zinc-500 hover:text-zinc-300'}`}>EN</button>
+        </div>
+
         <nav className="flex-1">
-          <SectionTitle icon={LayoutTemplate} title="Workspace" />
-          <NavItem id="files" icon={FileText} label="Gestione File" />
-          <NavItem id="layout" icon={Settings} label="Layout & Export" />
+          <SectionTitle icon={LayoutTemplate} title={t.workspace} />
+          <NavItem id="files" icon={FileText} label={t.files} />
+          <NavItem id="layout" icon={Settings} label={t.layout} />
           <div className="h-6" />
-          <SectionTitle icon={Shield} title="Security & Brand" />
-          <NavItem id="watermark" icon={ImageIcon} label="Watermark & Logo" />
-          <NavItem id="security" icon={Lock} label="Ghost Mode" />
+          <SectionTitle icon={Shield} title={t.branding} />
+          <NavItem id="watermark" icon={ImageIcon} label={t.watermark} />
+          <NavItem id="security" icon={Lock} label={t.security} />
         </nav>
         <div className={`mt-auto p-4 rounded-2xl border ${health.status === 'crit' ? 'bg-red-950/20 border-red-500/20' : 'bg-zinc-900 border-white/5'}`}>
-          <div className="flex justify-between items-end mb-2"><span className="text-[10px] font-bold text-zinc-500 uppercase">System Health</span><span className={`text-xs font-black ${health.status === 'ok' ? 'text-green-500' : 'text-yellow-500'}`}>{health.score}%</span></div>
+          <div className="flex justify-between items-end mb-2"><span className="text-[10px] font-bold text-zinc-500 uppercase">{t.health}</span><span className={`text-xs font-black ${health.status === 'ok' ? 'text-green-500' : 'text-yellow-500'}`}>{health.score}%</span></div>
           <div className="w-full h-1 bg-zinc-800 rounded-full mb-3 overflow-hidden"><div className={`h-full transition-all duration-500 ${health.status === 'ok' ? 'bg-green-500' : 'bg-yellow-500'}`} style={{width: `${health.score}%`}} /></div>
-          <div className="flex items-center gap-2 text-[10px] text-zinc-400"><Activity size={12} /> Peso Stimato: <span className="text-zinc-200">{health.size} MB</span></div>
+          <div className="flex items-center gap-2 text-[10px] text-zinc-400"><Activity size={12} /> {t.weight}: <span className="text-zinc-200">{health.size} MB</span></div>
         </div>
       </aside>
 
       {/* CENTER */}
       <main className="flex-1 flex flex-col relative bg-zinc-900/50">
         <header className="h-16 border-b border-white/5 flex items-center justify-between px-8 bg-zinc-950/80 backdrop-blur-md sticky top-0 z-10">
-          <div className="flex items-center gap-4"><h2 className="text-sm font-bold text-zinc-300 uppercase tracking-wider">{activeTab === 'files' ? 'File Manager' : activeTab === 'layout' ? 'Layout Config' : activeTab === 'watermark' ? 'Branding' : 'Security'}</h2></div>
-          <div className="flex items-center gap-3"><div className="text-[10px] font-bold text-zinc-500 uppercase px-3 py-1 bg-zinc-900 rounded-full border border-white/5">{files.length} File Caricati</div></div>
+          <div className="flex items-center gap-4"><h2 className="text-sm font-bold text-zinc-300 uppercase tracking-wider">{activeTab === 'files' ? t.fileManager : activeTab === 'layout' ? t.layoutConfig : activeTab === 'watermark' ? t.brandingConfig : t.securityConfig}</h2></div>
+          <div className="flex items-center gap-3"><div className="text-[10px] font-bold text-zinc-500 uppercase px-3 py-1 bg-zinc-900 rounded-full border border-white/5">{files.length} {t.filesLoaded}</div></div>
         </header>
         <div className="flex-1 overflow-y-auto p-8">
           <div {...getRootProps()} className={`relative border-2 border-dashed rounded-[2rem] transition-all duration-300 group ${isDragActive ? 'border-blue-500 bg-blue-500/5 scale-[0.99]' : 'border-zinc-800 hover:border-zinc-700 hover:bg-zinc-900/50'}`}>
@@ -521,8 +679,8 @@ export default function DigitrikPro() {
             {files.length === 0 ? (
               <div className="h-64 flex flex-col items-center justify-center text-center p-10 cursor-pointer">
                 <div className="w-16 h-16 bg-zinc-900 rounded-2xl flex items-center justify-center mb-4 group-hover:scale-110 transition-transform shadow-2xl"><UploadCloud size={32} className="text-zinc-600 group-hover:text-blue-500 transition-colors" /></div>
-                <h3 className="text-lg font-bold text-zinc-300">Trascina qui i tuoi documenti</h3>
-                <p className="text-sm text-zinc-500 mt-2 max-w-xs">Supportiamo PDF, Immagini HQ e file di testo. Il motore Digitrik si occuperà del resto.</p>
+                <h3 className="text-lg font-bold text-zinc-300">{t.dropTitle}</h3>
+                <p className="text-sm text-zinc-500 mt-2 max-w-xs">{t.dropDesc}</p>
               </div>
             ) : (
               <div className="p-8">
@@ -542,7 +700,7 @@ export default function DigitrikPro() {
                           </Draggable>
                         ))}
                         {provided.placeholder}
-                        <div className="border border-dashed border-zinc-800 rounded-xl flex flex-col items-center justify-center p-4 hover:bg-zinc-900/50 transition-colors cursor-pointer text-zinc-600 hover:text-zinc-400"><Plus size={24} /><span className="text-[10px] font-bold mt-2 uppercase">Aggiungi</span></div>
+                        <div className="border border-dashed border-zinc-800 rounded-xl flex flex-col items-center justify-center p-4 hover:bg-zinc-900/50 transition-colors cursor-pointer text-zinc-600 hover:text-zinc-400"><Plus size={24} /><span className="text-[10px] font-bold mt-2 uppercase">{t.add}</span></div>
                       </div>
                     )}
                   </Droppable>
@@ -553,8 +711,8 @@ export default function DigitrikPro() {
           {previewUrl && (
             <div className="mt-8 animate-in fade-in slide-in-from-bottom-4 duration-500">
               <button onClick={() => setIsPreviewOpen(!isPreviewOpen)} className="w-full flex justify-between items-center mb-4 px-2 group">
-                <div className="flex items-center gap-2"><div className="text-zinc-400 uppercase tracking-widest text-[10px] font-bold flex items-center gap-2 group-hover:text-blue-500 transition-colors">{isPreviewOpen ? <Eye size={14} /> : <EyeOff size={14} />} Live Output Preview {isPreviewOpen ? '' : '(Hidden)'}</div></div>
-                <span className="text-[10px] text-zinc-500 bg-zinc-900 px-2 py-1 rounded">Rendering Real-time</span>
+                <div className="flex items-center gap-2"><div className="text-zinc-400 uppercase tracking-widest text-[10px] font-bold flex items-center gap-2 group-hover:text-blue-500 transition-colors">{isPreviewOpen ? <Eye size={14} /> : <EyeOff size={14} />} {t.preview} {isPreviewOpen ? '' : t.previewHidden}</div></div>
+                <span className="text-[10px] text-zinc-500 bg-zinc-900 px-2 py-1 rounded">{t.rendering}</span>
               </button>
               {isPreviewOpen && (
                 <div className="bg-zinc-950 rounded-2xl border border-white/5 overflow-hidden shadow-2xl relative h-[500px]">
@@ -572,13 +730,13 @@ export default function DigitrikPro() {
           {activeTab === 'files' && (
             <div className="space-y-6 animate-in fade-in slide-in-from-right-2">
               <div>
-                <h3 className="text-sm font-bold text-white mb-1">Azione Principale</h3>
-                <p className="text-xs text-zinc-500 mb-4">Cosa vuoi fare con i file caricati?</p>
+                <h3 className="text-sm font-bold text-white mb-1">{t.mainAction}</h3>
+                <p className="text-xs text-zinc-500 mb-4">{t.actionDesc}</p>
                 <div className="space-y-2">
                   {[
-                    { id: 'conversione', label: 'Converti in PDF', icon: RefreshCcw },
-                    { id: 'unisci', label: 'Unisci File (Merge)', icon: Layers },
-                    { id: 'estrai', label: 'Estrai Pagine', icon: FileOutput }
+                    { id: 'conversione', label: t.actConvert, icon: RefreshCcw },
+                    { id: 'unisci', label: t.actMerge, icon: Layers },
+                    { id: 'estrai', label: t.actExtract, icon: FileOutput }
                   ].map(act => (
                     <button key={act.id} onClick={() => setConfig({ ...config, action: act.id })} className={`w-full flex items-center justify-between p-3 rounded-xl border transition-all ${config.action === act.id ? 'bg-zinc-100 border-zinc-100 text-zinc-950' : 'bg-zinc-900 border-zinc-800 text-zinc-400 hover:border-zinc-700'}`}>
                       <div className="flex items-center gap-3"><act.icon size={16} /><span className="text-xs font-bold">{act.label}</span></div>
@@ -589,7 +747,7 @@ export default function DigitrikPro() {
               </div>
               {config.action === 'estrai' && (
                 <div className="p-4 bg-zinc-900 rounded-xl border border-zinc-800">
-                  <label className="text-[10px] font-bold text-zinc-400 uppercase mb-2 block">Range Pagine (es. 1-3, 5)</label>
+                  <label className="text-[10px] font-bold text-zinc-400 uppercase mb-2 block">{t.rangeLabel}</label>
                   <input type="text" placeholder="E.g. 1, 3-5" value={config.extractRange} onChange={e => setConfig({...config, extractRange: e.target.value})} className="w-full bg-zinc-950 border border-zinc-800 rounded-lg p-2 text-xs text-white focus:border-blue-500 outline-none" />
                 </div>
               )}
@@ -598,17 +756,17 @@ export default function DigitrikPro() {
 
           {activeTab === 'layout' && (
             <div className="space-y-6 animate-in fade-in slide-in-from-right-2">
-              <SectionTitle icon={LayoutTemplate} title="Struttura Pagina" />
+              <SectionTitle icon={LayoutTemplate} title={t.pageStruct} />
               <div className="space-y-4">
                 
                 {/* HEADER SECTION */}
                 <div className="p-4 bg-zinc-900 rounded-xl border border-zinc-800 space-y-3">
-                  <Toggle label="Intestazione" checked={config.useHeader} onChange={v => setConfig({...config, useHeader: v})} icon={AlignLeft} />
+                  <Toggle label={t.header} checked={config.useHeader} onChange={v => setConfig({...config, useHeader: v})} icon={AlignLeft} />
                   {config.useHeader && (
                     <div className="animate-in slide-in-from-top-2 fade-in">
                       <input 
                         type="text" 
-                        placeholder="Testo Header..." 
+                        placeholder={t.headerPlace} 
                         value={config.headerText} 
                         onChange={e => setConfig({...config, headerText: e.target.value})} 
                         className="w-full bg-zinc-950 border border-zinc-800 rounded-lg p-2 text-xs text-white outline-none mb-1" 
@@ -623,12 +781,12 @@ export default function DigitrikPro() {
 
                 {/* FOOTER SECTION */}
                 <div className="p-4 bg-zinc-900 rounded-xl border border-zinc-800 space-y-3">
-                  <Toggle label="Piè di Pagina" checked={config.useFooter} onChange={v => setConfig({...config, useFooter: v})} icon={AlignRight} />
+                  <Toggle label={t.footer} checked={config.useFooter} onChange={v => setConfig({...config, useFooter: v})} icon={AlignRight} />
                   {config.useFooter && (
                     <div className="animate-in slide-in-from-top-2 fade-in">
                       <input 
                         type="text" 
-                        placeholder="Testo Footer..." 
+                        placeholder={t.footerPlace} 
                         value={config.footerText} 
                         onChange={e => setConfig({...config, footerText: e.target.value})} 
                         className="w-full bg-zinc-950 border border-zinc-800 rounded-lg p-2 text-xs text-white outline-none mb-1" 
@@ -643,11 +801,11 @@ export default function DigitrikPro() {
 
                 {/* PAGINATION SECTION */}
                 <div className="p-4 bg-zinc-900 rounded-xl border border-zinc-800 space-y-3">
-                  <Toggle label="Numerazione Pagine" checked={config.usePagination} onChange={v => setConfig({...config, usePagination: v})} icon={List} />
+                  <Toggle label={t.pagination} checked={config.usePagination} onChange={v => setConfig({...config, usePagination: v})} icon={List} />
                   {config.usePagination && (
                     <div className="animate-in slide-in-from-top-2 fade-in">
                       <div className="flex justify-between items-center mb-1 px-1">
-                        <span className="text-[10px] text-zinc-500 font-bold uppercase">Posizione</span>
+                        <span className="text-[10px] text-zinc-500 font-bold uppercase">{t.position}</span>
                       </div>
                       <AlignSelector 
                         value={config.paginationAlign} 
@@ -658,7 +816,7 @@ export default function DigitrikPro() {
                 </div>
               </div>
               
-              <SectionTitle icon={RotateCw} title="Rotazione Pagine" />
+              <SectionTitle icon={RotateCw} title={t.rotation} />
               <div className="grid grid-cols-4 gap-2">
                 {[0, 90, 180, 270].map(deg => (
                   <button key={deg} onClick={() => setConfig({...config, rotation: deg})} className={`py-2 rounded-lg text-xs font-bold border transition-all ${config.rotation === deg ? 'bg-blue-600 border-blue-600 text-white' : 'bg-zinc-900 border-zinc-800 text-zinc-500 hover:text-zinc-300'}`}>{deg}°</button>
@@ -669,18 +827,18 @@ export default function DigitrikPro() {
 
           {activeTab === 'watermark' && (
             <div className="space-y-6 animate-in fade-in slide-in-from-right-2">
-              <SectionTitle icon={Tag} title="Filigrana Testuale" />
+              <SectionTitle icon={Tag} title={t.textWatermark} />
               <div className="p-4 bg-zinc-900 rounded-xl border border-zinc-800 space-y-4">
-                <input type="text" placeholder="Testo filigrana (es. BOZZA)" value={config.watermarkText} onChange={e => setConfig({...config, watermarkText: e.target.value})} className="w-full bg-zinc-950 border border-zinc-800 rounded-lg p-3 text-xs font-bold text-white outline-none focus:border-blue-500" />
+                <input type="text" placeholder={t.watermarkPlace} value={config.watermarkText} onChange={e => setConfig({...config, watermarkText: e.target.value})} className="w-full bg-zinc-950 border border-zinc-800 rounded-lg p-3 text-xs font-bold text-white outline-none focus:border-blue-500" />
                 <div className="space-y-2">
-                  <Toggle label="Nastro (Diagonale)" checked={config.useWatermark} onChange={v => setConfig({...config, useWatermark: v})} icon={Sparkles} />
-                  <Toggle label="Griglia Fitta" checked={config.useGrid} onChange={v => setConfig({...config, useGrid: v})} icon={Grid3X3} />
-                  <Toggle label="Security Alert" checked={config.useSecurity} onChange={v => setConfig({...config, useSecurity: v})} icon={ShieldAlert} />
+                  <Toggle label={t.optRibbon} checked={config.useWatermark} onChange={v => setConfig({...config, useWatermark: v})} icon={Sparkles} />
+                  <Toggle label={t.optGrid} checked={config.useGrid} onChange={v => setConfig({...config, useGrid: v})} icon={Grid3X3} />
+                  <Toggle label={t.optSecurity} checked={config.useSecurity} onChange={v => setConfig({...config, useSecurity: v})} icon={ShieldAlert} />
                 </div>
-                <SmartSlider label="Opacità" value={Math.round(config.textOpacity*100)} min={5} max={100} onChange={v => setConfig({...config, textOpacity: v/100})} unit="%" />
-                <SmartSlider label="Grandezza" value={config.textSize} min={10} max={100} onChange={v => setConfig({...config, textSize: parseInt(v)})} unit="px" />
+                <SmartSlider label={t.opacity} value={Math.round(config.textOpacity*100)} min={5} max={100} onChange={v => setConfig({...config, textOpacity: v/100})} unit="%" />
+                <SmartSlider label={t.size} value={config.textSize} min={10} max={100} onChange={v => setConfig({...config, textSize: parseInt(v)})} unit="px" />
               </div>
-              <SectionTitle icon={IconImage} title="Logo Aziendale" />
+              <SectionTitle icon={IconImage} title={t.corpLogo} />
               <div {...getLogoProps()} className="border border-dashed border-zinc-700 rounded-xl p-6 text-center hover:bg-zinc-900/50 cursor-pointer transition-all">
                 <input {...getLogoInput()} />
                 <div className="flex flex-col items-center gap-2">
@@ -692,16 +850,16 @@ export default function DigitrikPro() {
                   ) : (
                     <>
                       <ImageIcon size={24} className="text-zinc-600 mb-2" />
-                      <span className="text-[10px] font-bold text-zinc-500 uppercase">Trascina Logo Qui</span>
+                      <span className="text-[10px] font-bold text-zinc-500 uppercase">{t.dragLogo}</span>
                     </>
                   )}
                 </div>
               </div>
               {config.logoFile && (
                 <div className="space-y-4 pt-2">
-                    <Toggle label="Attiva Logo" checked={config.useLogo} onChange={v => setConfig({...config, useLogo: v})} />
-                    <SmartSlider label="Dimensione Logo" value={config.logoSize} min={50} max={300} onChange={v => setConfig({...config, logoSize: parseInt(v)})} unit="px" />
-                    <SmartSlider label="Opacità Logo" value={Math.round(config.logoOpacity*100)} min={5} max={100} onChange={v => setConfig({...config, logoOpacity: v/100})} unit="%" />
+                    <Toggle label={t.activeLogo} checked={config.useLogo} onChange={v => setConfig({...config, useLogo: v})} />
+                    <SmartSlider label={t.logoSize} value={config.logoSize} min={50} max={300} onChange={v => setConfig({...config, logoSize: parseInt(v)})} unit="px" />
+                    <SmartSlider label={t.logoOpacity} value={Math.round(config.logoOpacity*100)} min={5} max={100} onChange={v => setConfig({...config, logoOpacity: v/100})} unit="%" />
                 </div>
               )}
             </div>
@@ -711,16 +869,16 @@ export default function DigitrikPro() {
             <div className="space-y-6 animate-in fade-in slide-in-from-right-2">
               <div className={`p-4 rounded-xl border transition-all ${config.ghostMode ? 'bg-red-950/20 border-red-500/50' : 'bg-zinc-900 border-zinc-800'}`}>
                 <div className="flex items-center justify-between mb-2">
-                  <div className="flex items-center gap-2 text-red-500 font-bold uppercase text-xs"><Ghost size={14} /> Ghost Protocol</div>
+                  <div className="flex items-center gap-2 text-red-500 font-bold uppercase text-xs"><Ghost size={14} /> {t.ghostProto}</div>
                   <input type="checkbox" checked={config.ghostMode} onChange={e => setConfig({...config, ghostMode: e.target.checked})} className="accent-red-500 w-4 h-4" />
                 </div>
-                <p className="text-[10px] text-zinc-500 leading-relaxed">Rimuove metadati, autore e data creazione per l'anonimato.</p>
+                <p className="text-[10px] text-zinc-500 leading-relaxed">{t.ghostDesc}</p>
               </div>
               {!config.ghostMode && (
                 <div className="space-y-3 pt-4 border-t border-white/5">
-                  <SectionTitle icon={Tag} title="Metadati Pubblici" />
-                  <input type="text" placeholder="Titolo Documento" value={config.metaTitle} onChange={e => setConfig({...config, metaTitle: e.target.value})} className="w-full bg-zinc-900 border border-zinc-800 rounded-lg p-2 text-xs text-white outline-none" />
-                  <input type="text" placeholder="Autore" value={config.metaAuthor} onChange={e => setConfig({...config, metaAuthor: e.target.value})} className="w-full bg-zinc-900 border border-zinc-800 rounded-lg p-2 text-xs text-white outline-none" />
+                  <SectionTitle icon={Tag} title={t.publicMeta} />
+                  <input type="text" placeholder={t.docTitle} value={config.metaTitle} onChange={e => setConfig({...config, metaTitle: e.target.value})} className="w-full bg-zinc-900 border border-zinc-800 rounded-lg p-2 text-xs text-white outline-none" />
+                  <input type="text" placeholder={t.docAuthor} value={config.metaAuthor} onChange={e => setConfig({...config, metaAuthor: e.target.value})} className="w-full bg-zinc-900 border border-zinc-800 rounded-lg p-2 text-xs text-white outline-none" />
                 </div>
               )}
             </div>
@@ -739,11 +897,11 @@ export default function DigitrikPro() {
             className="w-full py-4 bg-white text-black hover:bg-zinc-200 disabled:bg-zinc-800 disabled:text-zinc-600 rounded-xl font-black text-xs uppercase tracking-widest transition-all flex items-center justify-center gap-2 shadow-lg hover:shadow-xl hover:-translate-y-0.5 active:translate-y-0"
           >
             {!isSdkReady ? (
-              <span className="flex items-center gap-2 text-zinc-500"><RefreshCcw className="animate-spin" size={16} /> Caricamento Core...</span>
+              <span className="flex items-center gap-2 text-zinc-500"><RefreshCcw className="animate-spin" size={16} /> {t.loadingCore}</span>
             ) : isProcessing ? (
-              <span className="flex items-center gap-2"><RefreshCcw className="animate-spin" size={16} /> Elaborazione...</span>
+              <span className="flex items-center gap-2"><RefreshCcw className="animate-spin" size={16} /> {t.processing}</span>
             ) : (
-              <span className="flex items-center gap-2"><Wand2 size={16} /> Esporta Documento</span>
+              <span className="flex items-center gap-2"><Wand2 size={16} /> {t.exportBtn}</span>
             )}
           </button>
         </div>
