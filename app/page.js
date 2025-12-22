@@ -10,7 +10,7 @@ import {
   Sparkles, X, Check, RotateCw, Tag, Activity, ShieldAlert, 
   Feather, Layers, Printer, Ghost, Lock, Settings, LayoutTemplate, 
   Image as IconImage, Shield, FileOutput, UploadCloud, Grid3X3, List,
-  Info, Mail, ShieldCheck, Heart
+  Info, Mail, ShieldCheck, Heart, FolderOpen
 } from 'lucide-react';
 
 // --- TRANSLATIONS & DATA ---
@@ -36,6 +36,7 @@ const TRANSLATIONS = {
     // Dropzone
     dropTitle: "Trascina qui i tuoi documenti",
     dropDesc: "Supportiamo PDF, Immagini HQ e file di testo. Il motore Digitrik si occuperà del resto.",
+    browse: "oppure Sfoglia File", // NUOVO
     add: "Aggiungi File",
     unsupported: "File non supportati ignorati.",
     added: "file aggiunti.",
@@ -131,6 +132,7 @@ const TRANSLATIONS = {
     // Dropzone
     dropTitle: "Drop your documents here",
     dropDesc: "We support PDF, HQ Images, and text files. The Digitrik engine handles the rest.",
+    browse: "or Browse Files", // NEW
     add: "Add File",
     unsupported: "Unsupported files ignored.",
     added: "files added.",
@@ -374,7 +376,8 @@ export default function DigitrikPro() {
     if (valid.length > 0) showToast(`${valid.length} ${t.added}`);
   }, [lang]); 
 
-  const { getRootProps, getInputProps, isDragActive } = useDropzone({ onDrop, noClick: true });
+  // CHANGED: Added 'open' from dropzone
+  const { getRootProps, getInputProps, isDragActive, open } = useDropzone({ onDrop, noClick: true });
 
   const onLogoDrop = useCallback(accepted => {
     if (accepted[0]) {
@@ -771,13 +774,14 @@ export default function DigitrikPro() {
           <div className="flex items-center gap-3"><div className="text-[10px] font-bold text-zinc-500 uppercase px-3 py-1 bg-zinc-900 rounded-full border border-white/5">{files.length} {t.filesLoaded}</div></div>
         </header>
         <div className="flex-1 overflow-y-auto p-8">
-          <div {...getRootProps()} className={`relative border-2 border-dashed rounded-[2rem] transition-all duration-300 group ${isDragActive ? 'border-blue-500 bg-blue-500/5 scale-[0.99]' : 'border-zinc-800 hover:border-zinc-700 hover:bg-zinc-900/50'}`}>
+          <div {...getRootProps()} onClick={files.length === 0 ? open : undefined} className={`relative border-2 border-dashed rounded-[2rem] transition-all duration-300 group ${isDragActive ? 'border-blue-500 bg-blue-500/5 scale-[0.99]' : 'border-zinc-800 hover:border-zinc-700 hover:bg-zinc-900/50'}`}>
             <input {...getInputProps()} />
             {files.length === 0 ? (
               <div className="h-64 flex flex-col items-center justify-center text-center p-10 cursor-pointer">
                 <div className="w-16 h-16 bg-zinc-900 rounded-2xl flex items-center justify-center mb-4 group-hover:scale-110 transition-transform shadow-2xl"><UploadCloud size={32} className="text-zinc-600 group-hover:text-blue-500 transition-colors" /></div>
                 <h3 className="text-lg font-bold text-zinc-300">{t.dropTitle}</h3>
                 <p className="text-sm text-zinc-500 mt-2 max-w-xs">{t.dropDesc}</p>
+                <div className="mt-6 flex items-center gap-2 text-xs font-bold text-blue-500 uppercase tracking-widest bg-blue-500/10 px-4 py-2 rounded-full border border-blue-500/20 hover:bg-blue-500/20 transition-all"><FolderOpen size={14} /> {t.browse}</div>
               </div>
             ) : (
               <div className="p-8">
@@ -803,7 +807,7 @@ export default function DigitrikPro() {
                           </Draggable>
                         ))}
                         {provided.placeholder}
-                        <div className="border border-dashed border-zinc-800 rounded-xl flex flex-row gap-3 items-center justify-center p-4 hover:bg-zinc-900/50 transition-colors cursor-pointer text-zinc-600 hover:text-zinc-400 mt-2"><Plus size={20} /><span className="text-[10px] font-bold uppercase">{t.add}</span></div>
+                        <div onClick={open} className="border border-dashed border-zinc-800 rounded-xl flex flex-row gap-3 items-center justify-center p-4 hover:bg-zinc-900/50 transition-colors cursor-pointer text-zinc-600 hover:text-zinc-400 mt-2"><Plus size={20} /><span className="text-[10px] font-bold uppercase">{t.add}</span></div>
                       </div>
                     )}
                   </Droppable>
