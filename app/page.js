@@ -70,8 +70,8 @@ const TRANSLATIONS = {
     corpLogo: "Logo Aziendale",
     dragLogo: "Trascina Logo Qui",
     logoLoaded: "Logo caricato.",
-    activeLogo: "Attiva Logo",
-    logoSize: "Dimensione Logo",
+    activeLogo: "Attiva Logo (Pattern)",
+    logoSize: "Dimensione Loghi",
     logoOpacity: "Opacità Logo",
     // Security
     ghostProto: "Ghost Protocol",
@@ -166,7 +166,7 @@ const TRANSLATIONS = {
     corpLogo: "Corporate Logo",
     dragLogo: "Drag Logo Here",
     logoLoaded: "Logo loaded.",
-    activeLogo: "Enable Logo",
+    activeLogo: "Enable Logo (Pattern)",
     logoSize: "Logo Size",
     logoOpacity: "Logo Opacity",
     // Security
@@ -318,7 +318,7 @@ export default function DigitrikPro() {
 
   // UI STATE
   const [showRenameModal, setShowRenameModal] = useState(false);
-  const [showInfoModal, setShowInfoModal] = useState(false); // NEW STATE FOR INFO MODAL
+  const [showInfoModal, setShowInfoModal] = useState(false); 
   const [tempFilename, setTempFilename] = useState("Digitrik_Result");
   const [trickCuriosity, setTrickCuriosity] = useState({ key: 'PDF', text: '' });
   const [isPreviewOpen, setIsPreviewOpen] = useState(true);
@@ -460,7 +460,7 @@ export default function DigitrikPro() {
         }
       }
 
-      // Embed Logo
+      // Embed Logo logic
       let logoImg = null;
       if (config.useLogo && config.logoFile) {
         const logoBuf = await config.logoFile.arrayBuffer();
@@ -543,9 +543,25 @@ export default function DigitrikPro() {
           }
         }
 
+        // --- NUOVA LOGICA LOGO PATTERN (TILED) ---
         if (logoImg && config.useLogo) {
           const dims = logoImg.scaleToFit(config.logoSize, config.logoSize);
-          p.drawImage(logoImg, { x: width/2 - dims.width/2, y: height/2 - dims.height/2, width: dims.width, height: dims.height, opacity: config.logoOpacity });
+          const gap = 40; // Spazio tra i loghi
+          const stepX = dims.width + gap;
+          const stepY = dims.height + gap;
+
+          // Disegna una griglia di loghi
+          for (let x = 20; x < width; x += stepX) {
+            for (let y = 20; y < height; y += stepY) {
+              p.drawImage(logoImg, { 
+                x: x, 
+                y: y, 
+                width: dims.width, 
+                height: dims.height, 
+                opacity: config.logoOpacity 
+              });
+            }
+          }
         }
       });
 
