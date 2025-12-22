@@ -104,8 +104,8 @@ const TRANSLATIONS = {
       DOCX: { desc: "Word XML.", curiosity: "Il moderno formato DOCX è in realtà un archivio compresso. Se cambi l'estensione in .zip ed estrai il contenuto, troverai cartelle piene di file XML e immagini separate.", type: "Documento" },
       JPG: { desc: "Foto compressa.", curiosity: "Il formato JPEG usa una compressione 'lossy' che elimina dati invisibili all'occhio umano. Ogni volta che salvi di nuovo una JPG, la qualità diminuisce leggermente, creando artefatti digitali.", type: "Immagine" },
       PDF: { desc: "Portable Document.", curiosity: "Inventato nel 1993 per scambiare documenti su sistemi diversi. Oggi è uno standard ISO aperto così complesso che la sua documentazione tecnica supera le mille pagine di specifiche.", type: "Universale" },
-      PNG: { desc: "Web Lossless.", curiosity: "Sviluppato per sostituire le GIF, il PNG offre una compressione senza perdita. È l'unico formato web diffuso che supporta la trasparenza alpha, permettendo contorni sfumati perfetti su qualsiasi sfondo.", type: "Immagine" },
-      TXT: { desc: "Testo puro.", curiosity: "Il formato più puro esistente, privo di qualsiasi formattazione o stile. Essendo composto solo da caratteri ASCII o Unicode, un file TXT sarà leggibile tra 100 anni su qualsiasi computer.", type: "Testo" }
+      PNG: { desc: "Web Lossless.", curiosity: "Developed to replace GIFs, PNG offers lossless compression. It is the only widely used web format supporting alpha transparency, allowing for smooth, anti-aliased edges on any background color without jagged lines.", type: "Image" },
+      TXT: { desc: "Testo puro.", curiosity: "The purest format in existence, stripped of all formatting or style. Composed solely of ASCII or Unicode characters, a TXT file will remain readable one hundred years from now on any computer.", type: "Text" }
     }
   },
   en: {
@@ -314,7 +314,7 @@ export default function DigitrikPro() {
   // UI STATE
   const [showRenameModal, setShowRenameModal] = useState(false);
   const [showInfoModal, setShowInfoModal] = useState(false); 
-  const [showSupportModal, setShowSupportModal] = useState(false); // NEW STATE FOR SUPPORT MODAL
+  const [showSupportModal, setShowSupportModal] = useState(false); 
   const [tempFilename, setTempFilename] = useState("Digitrik_Result");
   const [trickCuriosity, setTrickCuriosity] = useState({ key: 'PDF', text: '' });
   const [isPreviewOpen, setIsPreviewOpen] = useState(true);
@@ -777,13 +777,26 @@ export default function DigitrikPro() {
                         <p className="text-[11px] text-gray-400">{t.donateDesc}</p>
                     </div>
                     <div className="grid grid-cols-3 gap-2">
-                        {['1€', '2€', '5€'].map(amount => (
-                            <button key={amount} className="py-3 rounded-xl border border-zinc-800 bg-zinc-900/50 text-white font-black hover:border-green-500 hover:text-green-400 transition-all shadow-sm">
-                                {amount}
-                            </button>
+                        {['1', '2', '5'].map(amount => (
+                            <a 
+                                key={amount} 
+                                href={`https://www.paypal.me/triches89/${amount}`}
+                                target="_blank"
+                                rel="noopener noreferrer"
+                                className="py-3 rounded-xl border border-zinc-800 bg-zinc-900/50 text-white font-black hover:border-green-500 hover:text-green-400 transition-all shadow-sm flex items-center justify-center"
+                            >
+                                {amount}€
+                            </a>
                         ))}
                     </div>
-                    <button className="w-full py-3 rounded-xl bg-green-600 text-white font-bold text-xs uppercase tracking-widest hover:bg-green-500 transition-all mt-2">PayPal</button>
+                    <a 
+                        href="https://www.paypal.me/triches89"
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="w-full py-3 rounded-xl bg-green-600 text-white font-bold text-xs uppercase tracking-widest hover:bg-green-500 transition-all mt-2 block text-center"
+                    >
+                        PayPal
+                    </a>
                 </div>
 
                 {/* Right: Ads */}
