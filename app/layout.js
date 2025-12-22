@@ -1,8 +1,8 @@
 import './globals.css'
 
 export const metadata = {
-  title: 'Digitrik Workstation',
-  description: 'Gestione documenti professionale',
+  title: 'DigitrikPRO Workstation',
+  description: 'Converti, Unisci e Modifica PDF Online Gratis',
 }
 
 export default function RootLayout({ children }) {
