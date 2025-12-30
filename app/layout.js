@@ -1,7 +1,7 @@
 import { Inter } from "next/font/google";
 import "./globals.css";
-// Importiamo le librerie ufficiali di Google
-import { GoogleAnalytics, GoogleAdSense } from '@next/third-parties/google';
+import Script from "next/script"; // 1. Importiamo lo strumento Script nativo
+import { GoogleAnalytics } from '@next/third-parties/google'; // Teniamo Analytics che di solito funziona
 
 const inter = Inter({ subsets: ["latin"] });
 
@@ -19,11 +19,17 @@ export default function RootLayout({ children }) {
         {children}
       </body>
       
-      {/* 1. Il tuo Google Analytics (GA4) */}
+      {/* Analytics (Funziona bene con la libreria) */}
       <GoogleAnalytics gaId="G-8PCSJNMV8E" />
 
-      {/* 2. Il tuo Google AdSense */}
-      <GoogleAdSense publisherId="pub-7585223971066548" />
+      {/* AdSense (Metodo Manuale "Bulletproof") */}
+      <Script
+        id="adsense-init"
+        async
+        src="https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=ca-pub-7585223971066548"
+        crossOrigin="anonymous"
+        strategy="afterInteractive"
+      />
     </html>
   );
 }
