@@ -99,6 +99,14 @@ const TRANSLATIONS = {
     adTitle: "Guarda uno Spot",
     adDesc: "30 secondi del tuo tempo per supportarci gratis.",
     adButton: "Guarda Video (Presto disponibile)",
+    // SEO & CHI SONO
+    seoTitle: "Digitrik Pro: Il Tuo Coltellino Svizzero per PDF",
+    seoDesc: "Digitrik Pro è una <strong>suite online gratuita</strong> progettata per semplificare la gestione dei documenti digitali. A differenza di altri servizi, la nostra tecnologia funziona interamente nel tuo browser: i tuoi file <strong>non vengono mai caricati su server esterni</strong>, garantendo una privacy assoluta. Puoi convertire immagini in PDF, unire documenti, aggiungere filigrane (watermark), numerare le pagine e pulire i metadati sensibili in pochi click.",
+    seoAuthorTitle: "Chi c'è dietro?",
+    seoAuthorText: "Mi chiamo <strong>Andrea Triches</strong> e sono lo sviluppatore di Digitrik Pro. Questo progetto non è il prodotto di una grande azienda, ma il frutto della mia <strong>passione per la programmazione</strong> e per l'open web. Ho creato questo strumento perché credo che manipolare un PDF non debba essere difficile, costoso o rischioso per la privacy.",
+    seoVisionTitle: "La Visione",
+    seoVisionText: "Digitrik Pro è solo l'inizio. Il mio obiettivo è costruire una serie di <strong>tool digitali gratuiti e accessibili a tutti</strong>, senza barriere all'ingresso. Questo spazio è un laboratorio in continua evoluzione, dove la sicurezza dell'utente e la semplicità d'uso vengono prima di tutto. Grazie per far parte di questo viaggio.",
+    
     enc: {
       AI: { desc: "Vettoriale Adobe.", curiosity: "Il formato AI di Adobe è essenzialmente un PDF modificabile mascherato. Sorprendentemente, se cambi l'estensione da .ai a .pdf, molti visualizzatori riusciranno ad aprirlo mostrando il contenuto vettoriale intatto.", type: "Vettoriale" },
       CSV: { desc: "Dati testuali.", curiosity: "Creato nel 1972, il CSV è il formato dati più antico ancora in uso. Nonostante la sua semplicità, è la spina dorsale dello scambio dati mondiale perché leggibile da qualsiasi macchina.", type: "Dati" },
@@ -192,6 +200,14 @@ const TRANSLATIONS = {
     adTitle: "Watch an Ad",
     adDesc: "30 seconds of your time to support us for free.",
     adButton: "Watch Video (Coming Soon)",
+    // SEO & WHO AM I
+    seoTitle: "Digitrik Pro: Your Swiss Army Knife for PDFs",
+    seoDesc: "Digitrik Pro is a <strong>free online suite</strong> designed to simplify digital document management. Unlike other services, our technology runs entirely in your browser: your files <strong>never get uploaded to external servers</strong>, ensuring absolute privacy. You can convert images to PDF, merge documents, add watermarks, number pages, and clean sensitive metadata in just a few clicks.",
+    seoAuthorTitle: "Who's behind this?",
+    seoAuthorText: "My name is <strong>Andrea Triches</strong> and I am the developer of Digitrik Pro. This project is not the product of a large corporation, but the result of my <strong>passion for programming</strong> and the open web. I created this tool because I believe manipulating a PDF shouldn't be difficult, expensive, or risky for privacy.",
+    seoVisionTitle: "The Vision",
+    seoVisionText: "Digitrik Pro is just the beginning. My goal is to build a series of <strong>free and accessible digital tools for everyone</strong>, with no barriers to entry. This space is an ever-evolving laboratory where user security and ease of use come first. Thank you for being part of this journey.",
+    
     enc: {
       AI: { desc: "Adobe Vector.", curiosity: "Adobe's AI format is essentially a disguised editable PDF. Surprisingly, if you simply rename the extension from .ai to .pdf, many standard viewers can open it and display the vector content.", type: "Vector" },
       CSV: { desc: "Text Data.", curiosity: "Created way back in 1972, CSV remains the oldest data format still in wide use today. Despite its simplicity, it is the backbone of global data exchange because machines read it easily.", type: "Data" },
@@ -299,7 +315,7 @@ const Toast = ({ message, type, onClose }) => (
 
 // --- MAIN APP ---
 export default function DigitrikPro() {
-  // CORE STATE (Default to ENGLISH as requested)
+  // CORE STATE (Default to ENGLISH)
   const [lang, setLang] = useState('en');
   const t = TRANSLATIONS[lang]; 
 
@@ -927,40 +943,36 @@ export default function DigitrikPro() {
             </div>
           )}
 
-          {/* --- NUOVA SEZIONE SEO / CHI SONO (INVISIBILE MA VISIBILE) --- */}
+          {/* --- NUOVA SEZIONE SEO / CHI SONO (DINAMICA) --- */}
           <div className="mt-12 border-t border-white/5 pt-8 text-zinc-500 max-w-4xl mx-auto space-y-6 pb-20">
              <div>
                 <h2 className="text-lg font-black uppercase tracking-wider text-zinc-300 mb-2 flex items-center gap-2">
-                   <Code2 size={20} className="text-blue-500" /> Digitrik Pro: Il Tuo Coltellino Svizzero per PDF
+                   <Code2 size={20} className="text-blue-500" /> {t.seoTitle}
                 </h2>
-                <p className="text-xs leading-relaxed text-zinc-400">
-                   Digitrik Pro è una <strong>suite online gratuita</strong> progettata per semplificare la gestione dei documenti digitali. 
-                   A differenza di altri servizi, la nostra tecnologia funziona interamente nel tuo browser: i tuoi file <strong>non vengono mai caricati su server esterni</strong>, 
-                   garantendo una privacy assoluta. Puoi convertire immagini in PDF, unire documenti, aggiungere filigrane (watermark), 
-                   numerare le pagine e pulire i metadati sensibili in pochi click.
-                </p>
+                <p 
+                    className="text-xs leading-relaxed text-zinc-400"
+                    dangerouslySetInnerHTML={{ __html: t.seoDesc }} 
+                />
              </div>
 
              <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
                 <div>
                    <h3 className="text-sm font-bold uppercase tracking-wide text-zinc-300 mb-1 flex items-center gap-2">
-                      <User size={16} className="text-green-500" /> Chi c'è dietro?
+                      <User size={16} className="text-green-500" /> {t.seoAuthorTitle}
                    </h3>
-                   <p className="text-xs leading-relaxed text-zinc-400">
-                      Mi chiamo <strong>Andrea Triches</strong> e sono lo sviluppatore di Digitrik Pro. 
-                      Questo progetto non è il prodotto di una grande azienda, ma il frutto della mia <strong>passione per la programmazione</strong> e per l'open web. 
-                      Ho creato questo strumento perché credo che manipolare un PDF non debba essere difficile, costoso o rischioso per la privacy.
-                   </p>
+                   <p 
+                        className="text-xs leading-relaxed text-zinc-400"
+                        dangerouslySetInnerHTML={{ __html: t.seoAuthorText }}
+                   />
                 </div>
                 <div>
                    <h3 className="text-sm font-bold uppercase tracking-wide text-zinc-300 mb-1 flex items-center gap-2">
-                      <Globe size={16} className="text-purple-500" /> La Visione
+                      <Globe size={16} className="text-purple-500" /> {t.seoVisionTitle}
                    </h3>
-                   <p className="text-xs leading-relaxed text-zinc-400">
-                      Digitrik Pro è solo l'inizio. Il mio obiettivo è costruire una serie di <strong>tool digitali gratuiti e accessibili a tutti</strong>, 
-                      senza barriere all'ingresso. Questo spazio è un laboratorio in continua evoluzione, dove la sicurezza dell'utente e la semplicità d'uso 
-                      vengono prima di tutto. Grazie per far parte di questo viaggio.
-                   </p>
+                   <p 
+                        className="text-xs leading-relaxed text-zinc-400"
+                        dangerouslySetInnerHTML={{ __html: t.seoVisionText }}
+                   />
                 </div>
              </div>
           </div>
