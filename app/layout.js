@@ -1,7 +1,6 @@
 import { Inter } from "next/font/google";
 import "./globals.css";
-import Script from "next/script"; // 1. Importiamo lo strumento Script nativo
-import { GoogleAnalytics } from '@next/third-parties/google'; // Teniamo Analytics che di solito funziona
+import Script from "next/script"; // Usiamo solo questo, è nativo e sicuro.
 
 const inter = Inter({ subsets: ["latin"] });
 
@@ -19,10 +18,21 @@ export default function RootLayout({ children }) {
         {children}
       </body>
       
-      {/* Analytics (Funziona bene con la libreria) */}
-      <GoogleAnalytics gaId="G-8PCSJNMV8E" />
+      {/* --- GOOGLE ANALYTICS (MANUALE) --- */}
+      <Script
+        strategy="afterInteractive"
+        src={`https://www.googletagmanager.com/gtag/js?id=G-8PCSJNMV8E`}
+      />
+      <Script id="google-analytics" strategy="afterInteractive">
+        {`
+          window.dataLayer = window.dataLayer || [];
+          function gtag(){dataLayer.push(arguments);}
+          gtag('js', new Date());
+          gtag('config', 'G-8PCSJNMV8E');
+        `}
+      </Script>
 
-      {/* AdSense (Metodo Manuale "Bulletproof") */}
+      {/* --- GOOGLE ADSENSE (MANUALE) --- */}
       <Script
         id="adsense-init"
         async
