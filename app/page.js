@@ -10,7 +10,8 @@ import {
   Sparkles, X, Check, RotateCw, Tag, Activity, ShieldAlert, 
   Feather, Layers, Printer, Ghost, Lock, Settings, LayoutTemplate, 
   Image as IconImage, Shield, FileOutput, UploadCloud, Grid3X3, List,
-  Info, Mail, ShieldCheck, Heart, FolderOpen, Coffee, PlayCircle, CreditCard
+  Info, Mail, ShieldCheck, Heart, FolderOpen, Coffee, PlayCircle, CreditCard,
+  User, Globe, Code2
 } from 'lucide-react';
 
 // --- TRANSLATIONS & DATA ---
@@ -104,8 +105,8 @@ const TRANSLATIONS = {
       DOCX: { desc: "Word XML.", curiosity: "Il moderno formato DOCX è in realtà un archivio compresso. Se cambi l'estensione in .zip ed estrai il contenuto, troverai cartelle piene di file XML e immagini separate.", type: "Documento" },
       JPG: { desc: "Foto compressa.", curiosity: "Il formato JPEG usa una compressione 'lossy' che elimina dati invisibili all'occhio umano. Ogni volta che salvi di nuovo una JPG, la qualità diminuisce leggermente, creando artefatti digitali.", type: "Immagine" },
       PDF: { desc: "Portable Document.", curiosity: "Inventato nel 1993 per scambiare documenti su sistemi diversi. Oggi è uno standard ISO aperto così complesso che la sua documentazione tecnica supera le mille pagine di specifiche.", type: "Universale" },
-      PNG: { desc: "Web Lossless.", curiosity: "Developed to replace GIFs, PNG offers lossless compression. It is the only widely used web format supporting alpha transparency, allowing for smooth, anti-aliased edges on any background color without jagged lines.", type: "Image" },
-      TXT: { desc: "Testo puro.", curiosity: "The purest format in existence, stripped of all formatting or style. Composed solely of ASCII or Unicode characters, a TXT file will remain readable one hundred years from now on any computer.", type: "Text" }
+      PNG: { desc: "Web Lossless.", curiosity: "Sviluppato per sostituire le GIF, il PNG offre una compressione senza perdita. È l'unico formato web diffuso che supporta la trasparenza alpha, permettendo contorni sfumati perfetti su qualsiasi sfondo.", type: "Immagine" },
+      TXT: { desc: "Testo puro.", curiosity: "Il formato più puro esistente, privo di qualsiasi formattazione o stile. Essendo composto solo da caratteri ASCII o Unicode, un file TXT sarà leggibile tra 100 anni su qualsiasi computer.", type: "Testo" }
     }
   },
   en: {
@@ -925,6 +926,46 @@ export default function DigitrikPro() {
               )}
             </div>
           )}
+
+          {/* --- NUOVA SEZIONE SEO / CHI SONO (INVISIBILE MA VISIBILE) --- */}
+          <div className="mt-12 border-t border-white/5 pt-8 text-zinc-500 max-w-4xl mx-auto space-y-6 pb-20">
+             <div>
+                <h2 className="text-lg font-black uppercase tracking-wider text-zinc-300 mb-2 flex items-center gap-2">
+                   <Code2 size={20} className="text-blue-500" /> Digitrik Pro: Il Tuo Coltellino Svizzero per PDF
+                </h2>
+                <p className="text-xs leading-relaxed text-zinc-400">
+                   Digitrik Pro è una <strong>suite online gratuita</strong> progettata per semplificare la gestione dei documenti digitali. 
+                   A differenza di altri servizi, la nostra tecnologia funziona interamente nel tuo browser: i tuoi file <strong>non vengono mai caricati su server esterni</strong>, 
+                   garantendo una privacy assoluta. Puoi convertire immagini in PDF, unire documenti, aggiungere filigrane (watermark), 
+                   numerare le pagine e pulire i metadati sensibili in pochi click.
+                </p>
+             </div>
+
+             <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
+                <div>
+                   <h3 className="text-sm font-bold uppercase tracking-wide text-zinc-300 mb-1 flex items-center gap-2">
+                      <User size={16} className="text-green-500" /> Chi c'è dietro?
+                   </h3>
+                   <p className="text-xs leading-relaxed text-zinc-400">
+                      Mi chiamo <strong>Andrea Triches</strong> e sono lo sviluppatore di Digitrik Pro. 
+                      Questo progetto non è il prodotto di una grande azienda, ma il frutto della mia <strong>passione per la programmazione</strong> e per l'open web. 
+                      Ho creato questo strumento perché credo che manipolare un PDF non debba essere difficile, costoso o rischioso per la privacy.
+                   </p>
+                </div>
+                <div>
+                   <h3 className="text-sm font-bold uppercase tracking-wide text-zinc-300 mb-1 flex items-center gap-2">
+                      <Globe size={16} className="text-purple-500" /> La Visione
+                   </h3>
+                   <p className="text-xs leading-relaxed text-zinc-400">
+                      Digitrik Pro è solo l'inizio. Il mio obiettivo è costruire una serie di <strong>tool digitali gratuiti e accessibili a tutti</strong>, 
+                      senza barriere all'ingresso. Questo spazio è un laboratorio in continua evoluzione, dove la sicurezza dell'utente e la semplicità d'uso 
+                      vengono prima di tutto. Grazie per far parte di questo viaggio.
+                   </p>
+                </div>
+             </div>
+          </div>
+          {/* --- FINE SEZIONE SEO --- */}
+
         </div>
       </main>
 

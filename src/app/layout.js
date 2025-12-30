@@ -1,7 +1,7 @@
 import { Inter } from "next/font/google";
 import "./globals.css";
-// 1. Importiamo il componente ufficiale per Google Analytics
-import { GoogleAnalytics } from '@next/third-parties/google';
+// 1. Importiamo SIA Analytics CHE AdSense
+import { GoogleAnalytics, GoogleAdSense } from '@next/third-parties/google';
 
 const inter = Inter({ subsets: ["latin"] });
 
@@ -19,9 +19,11 @@ export default function RootLayout({ children }) {
         {children}
       </body>
       
-      {/* 2. Componente Google Analytics */}
-      {/* SOSTITUISCI 'G-XXXXXXXXXX' CON IL TUO VERO ID (es. G-123456789) */}
-      <GoogleAnalytics gaId="G-XXXXXXXXXX" />
+      {/* 2. Analytics (Sostituisci con il tuo ID che inizia con G-) */}
+      <GoogleAnalytics gaId="G-TUO_ID_ANALYTICS" />
+
+      {/* 3. AdSense (Sostituisci con il tuo ID che inizia con pub-) */}
+      <GoogleAdSense publisherId="pub-TUO_ID_ADSENSE" />
     </html>
   );
 }
